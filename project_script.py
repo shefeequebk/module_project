@@ -275,7 +275,7 @@ def main():
     parser.add_argument(
         "--encodings",
         help="Path to face encodings pickle",
-        default="facial_recognition/encodings.pickle",
+        default="face_rec/encodings.pickle",
     )
     parser.add_argument(
         "--duration",

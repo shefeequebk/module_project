@@ -1,0 +1,1 @@
+pip install "numpy<2" "opencv-python<4.10" tflite-runtim

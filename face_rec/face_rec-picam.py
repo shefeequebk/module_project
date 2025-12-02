@@ -7,8 +7,8 @@ import argparse
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Face recognition with camera')
-parser.add_argument('--pie-cam', '--picam', action='store_true', 
-                    help='Use Raspberry Pi camera (default: False, uses webcam)')
+parser.add_argument('--webcam', action='store_false', dest='pie_cam', default=True,
+                    help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)')
 args = parser.parse_args()
 pie_cam = args.pie_cam
 if pie_cam:

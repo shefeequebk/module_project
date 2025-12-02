@@ -8,6 +8,7 @@ import numpy as np
 import face_recognition
 import tflite_runtime.interpreter as tflite
 from threading import Thread
+
 # Set matplotlib to use non-GUI backend before importing pyplot
 import matplotlib
 matplotlib.use('Agg')  # Use Agg backend (no GUI required)
@@ -19,12 +20,24 @@ import matplotlib.pyplot as plt
 
 DURATION_SECONDS = 20   # total time to run (can be changed with --duration)
 CV_SCALER = 4           # downscale factor for face detection (higher = faster, less accurate)
-MAX_FPS = 5          # maximum frames per second to process (None = process all frames)
+MAX_FPS = 5             # maximum frames per second to process (None = process all frames)
 
-# Parse PIE_CAM argument at module level
+# How often to run each detector (in processed frames)
+FACE_EVERY_N_FRAMES = 2   # run face recognition every 2 processed frames
+OBJ_EVERY_N_FRAMES = 1    # run object detection every processed frame
+
+# Logging frequency (seconds). Set to 0 to log every processed frame.
+LOG_EVERY_SECONDS = 0.0
+
+# Parse PIE_CAM argument at module level (so importing this module won't fail)
 parser_module = argparse.ArgumentParser(add_help=False)
-parser_module.add_argument('--webcam', action='store_false', dest='pie_cam', default=True,
-                          help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)')
+parser_module.add_argument(
+    '--webcam',
+    action='store_false',
+    dest='pie_cam',
+    default=True,
+    help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)'
+)
 args_module, _ = parser_module.parse_known_args()
 PIE_CAM = args_module.pie_cam
 
@@ -110,8 +123,9 @@ def recognize_faces(frame, known_face_encodings, known_face_names, cv_scaler=4):
     rgb_small = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
     face_locations_small = face_recognition.face_locations(rgb_small)
+    # OPTIMIZATION: use the "small" model instead of "large"
     face_encodings = face_recognition.face_encodings(
-        rgb_small, face_locations_small, model="large"
+        rgb_small, face_locations_small, model="small"
     )
 
     detections = []
@@ -147,32 +161,54 @@ def recognize_faces(frame, known_face_encodings, known_face_names, cv_scaler=4):
 
 
 def load_tflite_model(model_path, labels_path):
+    """Load TFLite model and precompute I/O details once (faster per-frame)."""
     print("[INFO] loading TFLite object detection model...", end="")
     start_time = time.time()
     interpreter = tflite.Interpreter(model_path=model_path)
     interpreter.allocate_tensors()
-    with open(labels_path, "r") as f:
-        labels = [line.strip() for line in f.readlines()]
-    elapsed = time.time() - start_time
-    print(f" done in {elapsed:.2f} seconds.")
-    return interpreter, labels
 
-
-def detect_objects(frame, interpreter, labels, min_conf_thresh, imW, imH):
-    """Run TFLite object detection on a BGR frame."""
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-
-    height = input_details[0]["shape"][1]
-    width = input_details[0]["shape"][2]
+    input_height = input_details[0]["shape"][1]
+    input_width = input_details[0]["shape"][2]
     floating_model = input_details[0]["dtype"] == np.float32
 
+    with open(labels_path, "r") as f:
+        labels = [line.strip() for line in f.readlines()]
+
+    elapsed = time.time() - start_time
+    print(f" done in {elapsed:.2f} seconds.")
+    return (
+        interpreter,
+        labels,
+        input_details,
+        output_details,
+        input_height,
+        input_width,
+        floating_model,
+    )
+
+
+def detect_objects(
+    frame,
+    interpreter,
+    labels,
+    min_conf_thresh,
+    imW,
+    imH,
+    input_details,
+    output_details,
+    input_height,
+    input_width,
+    floating_model,
+):
+    """Run TFLite object detection on a BGR frame."""
     input_mean = 127.5
     input_std = 127.5
 
     # Acquire frame and resize to expected shape [1xHxWx3]
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame_resized = cv2.resize(frame_rgb, (width, height))
+    frame_resized = cv2.resize(frame_rgb, (input_width, input_height))
     input_data = np.expand_dims(frame_resized, axis=0)
 
     # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
@@ -184,27 +220,25 @@ def detect_objects(frame, interpreter, labels, min_conf_thresh, imW, imH):
     interpreter.invoke()
 
     # Retrieve detection results
-    boxes = interpreter.get_tensor(output_details[0]["index"])[0]  # Bounding box coordinates of detected objects
-    classes = interpreter.get_tensor(output_details[1]["index"])[0]  # Class index of detected objects
-    scores = interpreter.get_tensor(output_details[2]["index"])[0]  # Confidence of detected objects
+    boxes = interpreter.get_tensor(output_details[0]["index"])[0]  # Bounding box coords
+    classes = interpreter.get_tensor(output_details[1]["index"])[0]  # Class indices
+    scores = interpreter.get_tensor(output_details[2]["index"])[0]  # Confidence scores
 
     detections = []
-    # Loop over all detections and draw detection box if confidence is above minimum threshold
+    # Loop over all detections and keep those above threshold
     for i in range(len(scores)):
-        if ((scores[i] > min_conf_thresh) and (scores[i] <= 1.0)):
-            # Get bounding box coordinates
-            # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
+        if (scores[i] > min_conf_thresh) and (scores[i] <= 1.0):
             ymin = int(max(1, boxes[i][0] * imH))
             xmin = int(max(1, boxes[i][1] * imW))
             ymax = int(min(imH, boxes[i][2] * imH))
             xmax = int(min(imW, boxes[i][3] * imW))
-            
-            label = labels[int(classes[i])]  # Look up object name from "labels" array using class index
-            
-            # Filter out "person" detections
+
+            label = labels[int(classes[i])]  # Label for class index
+
+            # Example filter: skip "person" if not needed
             if label.lower() == "person":
                 continue
-            
+
             # Store as (top, right, bottom, left)
             detections.append(
                 {
@@ -227,8 +261,16 @@ def plot_detections_over_time(detections_log, total_duration):
     plt.figure(figsize=(10, 6))
 
     for (label, kind) in keys:
-        times = [d["time"] for d in detections_log if d["label"] == label and d["kind"] == kind]
-        confs = [d["confidence"] for d in detections_log if d["label"] == label and d["kind"] == kind]
+        times = [
+            d["time"]
+            for d in detections_log
+            if d["label"] == label and d["kind"] == kind
+        ]
+        confs = [
+            d["confidence"]
+            for d in detections_log
+            if d["label"] == label and d["kind"] == kind
+        ]
         if not times:
             continue
         plt.plot(times, confs, marker="o", linestyle="-", label=f"{label} ({kind})")
@@ -241,10 +283,10 @@ def plot_detections_over_time(detections_log, total_duration):
     plt.grid(True)
     plt.legend(loc="upper right")
     plt.tight_layout()
-    
+
     # Save plot to file instead of showing (works in headless environments)
     output_file = "detections_over_time.png"
-    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.savefig(output_file, dpi=150, bbox_inches="tight")
     print(f"[INFO] Plot saved to {output_file}")
     plt.close()  # Close the figure to free memory
 
@@ -257,7 +299,9 @@ def print_detection_intervals(detections_log, max_gap=1.0):
     keys = sorted({(d["label"], d["kind"]) for d in detections_log})
     print("\nDetection intervals:")
     for (label, kind) in keys:
-        times = sorted(d["time"] for d in detections_log if d["label"] == label and d["kind"] == kind)
+        times = sorted(
+            d["time"] for d in detections_log if d["label"] == label and d["kind"] == kind
+        )
         if not times:
             continue
         intervals = []
@@ -318,23 +362,39 @@ def main():
     )
     parser.add_argument(
         "--webcam",
-        action='store_false',
-        dest='pie_cam',
+        action="store_false",
+        dest="pie_cam",
         default=True,
-        help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)',
+        help="Use webcam instead of Raspberry Pi camera (default: use Pi camera)",
+    )
+    parser.add_argument(
+        "--no-display",
+        action="store_true",
+        help="Run without showing OpenCV window (for headless / speed)",
     )
 
     args = parser.parse_args()
     # Update PIE_CAM from main parser (in case it was changed)
+    global PIE_CAM
     PIE_CAM = args.pie_cam
 
     min_conf_thresh = float(args.threshold)
     resW, resH = args.resolution.split("x")
     imW, imH = int(resW), int(resH)
 
+    show_window = not args.no_display
+
     # Load models
     known_face_encodings, known_face_names = load_face_encodings(args.encodings)
-    interpreter, labels = load_tflite_model(args.model, args.labels)
+    (
+        interpreter,
+        labels,
+        input_details,
+        output_details,
+        input_height,
+        input_width,
+        floating_model,
+    ) = load_tflite_model(args.model, args.labels)
 
     # Start video stream
     print("[INFO] starting video stream...")
@@ -346,11 +406,19 @@ def main():
     detections_log = []  # list of dicts: time, label, kind, confidence
     freq = cv2.getTickFrequency()
     experiment_start = time.time()
-    
+
     # Frame rate limiting
     max_fps = args.max_fps
     frame_interval = 1.0 / max_fps if max_fps else None
-    last_frame_time = 0
+    last_frame_time = 0.0
+
+    # Detector scheduling
+    frame_idx = 0
+    last_face_dets = []
+    last_obj_dets = []
+
+    # Logging schedule
+    last_log_time = -1e9  # big negative so first log always allowed
 
     while True:
         now = time.time()
@@ -372,42 +440,71 @@ def main():
 
         # Convert frame format if using Picamera2 (BGRA/RGBA to BGR)
         if PIE_CAM:
-            # The frame from picamera2 is in RGBA or RGB format, convert to BGR for OpenCV drawing
             if len(frame.shape) == 3 and frame.shape[2] == 4:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
             elif len(frame.shape) == 3 and frame.shape[2] == 3:
-                # If it's already RGB, convert to BGR
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
+        frame_idx += 1
+
+        # Decide whether to run detectors on this processed frame
+        run_face = (frame_idx % FACE_EVERY_N_FRAMES == 0)
+        run_obj = (frame_idx % OBJ_EVERY_N_FRAMES == 0)
+
         # Face recognition
-        face_dets = recognize_faces(
-            frame, known_face_encodings, known_face_names, cv_scaler=CV_SCALER
-        )
+        if run_face:
+            last_face_dets = recognize_faces(
+                frame, known_face_encodings, known_face_names, cv_scaler=CV_SCALER
+            )
 
         # Object detection
-        obj_dets = detect_objects(
-            frame, interpreter, labels, min_conf_thresh, imW, imH
-        )
+        if run_obj:
+            last_obj_dets = detect_objects(
+                frame,
+                interpreter,
+                labels,
+                min_conf_thresh,
+                imW,
+                imH,
+                input_details,
+                output_details,
+                input_height,
+                input_width,
+                floating_model,
+            )
 
-        # Log detections for plotting later
-        for det in face_dets:
-            detections_log.append(
-                {
-                    "time": elapsed,
-                    "label": det["label"],
-                    "kind": "face",
-                    "confidence": det["confidence"],
-                }
-            )
-        for det in obj_dets:
-            detections_log.append(
-                {
-                    "time": elapsed,
-                    "label": det["label"],
-                    "kind": "object",
-                    "confidence": det["confidence"],
-                }
-            )
+        face_dets = last_face_dets
+        obj_dets = last_obj_dets
+
+        # Decide whether to log this frame's detections
+        log_this_frame = False
+        if LOG_EVERY_SECONDS <= 0.0:
+            log_this_frame = True
+        else:
+            if (elapsed - last_log_time) >= LOG_EVERY_SECONDS:
+                log_this_frame = True
+                last_log_time = elapsed
+
+        if log_this_frame:
+            # Log detections for plotting later
+            for det in face_dets:
+                detections_log.append(
+                    {
+                        "time": elapsed,
+                        "label": det["label"],
+                        "kind": "face",
+                        "confidence": det["confidence"],
+                    }
+                )
+            for det in obj_dets:
+                detections_log.append(
+                    {
+                        "time": elapsed,
+                        "label": det["label"],
+                        "kind": "object",
+                        "confidence": det["confidence"],
+                    }
+                )
 
         # Draw detections on frame
         # Faces: yellow boxes
@@ -440,35 +537,70 @@ def main():
             top, right, bottom, left = det["box"]
             label_text = det["label"]
             conf = det["confidence"]
-            
+
             # Draw bounding box
             cv2.rectangle(frame, (left, top), (right, bottom), (10, 255, 0), 2)
-            
+
             # Draw label
-            label = '%s: %d%%' % (label_text, int(conf * 100))  # Example: 'person: 72%'
-            label_size, base_line = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)  # Get font size
-            label_ymin = max(top, label_size[1] + 10)  # Make sure not to draw label too close to top of window
-            cv2.rectangle(frame, (left, label_ymin - label_size[1] - 10), (left + label_size[0], label_ymin + base_line - 10), (255, 255, 255), cv2.FILLED)  # Draw white box to put label text in
-            cv2.putText(frame, label, (left, label_ymin - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)  # Draw label text
+            label = "%s: %d%%" % (label_text, int(conf * 100))
+            label_size, base_line = cv2.getTextSize(
+                label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2
+            )
+            label_ymin = max(top, label_size[1] + 10)
+            cv2.rectangle(
+                frame,
+                (left, label_ymin - label_size[1] - 10),
+                (left + label_size[0], label_ymin + base_line - 10),
+                (255, 255, 255),
+                cv2.FILLED,
+            )
+            cv2.putText(
+                frame,
+                label,
+                (left, label_ymin - 7),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 0, 0),
+                2,
+            )
             current_obj_count += 1
 
         # Calculate framerate
         t2 = cv2.getTickCount()
         time1 = (t2 - t1) / freq
         fps = 1.0 / time1 if time1 > 0 else 0.0
-        
+
         # Draw framerate and detection count in corner of frame
-        cv2.putText(frame, 'FPS: {0:.2f}'.format(fps), (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 55), 2, cv2.LINE_AA)
-        cv2.putText(frame, 'Total Detection Count : ' + str(current_obj_count), (15, 65), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 55), 2, cv2.LINE_AA)
+        cv2.putText(
+            frame,
+            "FPS: {0:.2f}".format(fps),
+            (15, 25),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 55),
+            2,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            frame,
+            "Total Detection Count : " + str(current_obj_count),
+            (15, 65),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 55),
+            2,
+            cv2.LINE_AA,
+        )
 
-        cv2.imshow("Face + Object Detector", frame)
-
-        if cv2.waitKey(1) == ord("q"):
-            print("[INFO] 'q' pressed, exiting...")
-            break
+        if show_window:
+            cv2.imshow("Face + Object Detector", frame)
+            if cv2.waitKey(1) == ord("q"):
+                print("[INFO] 'q' pressed, exiting...")
+                break
 
     # Clean up
-    cv2.destroyAllWindows()
+    if show_window:
+        cv2.destroyAllWindows()
     videostream.stop()
 
     total_duration = time.time() - experiment_start

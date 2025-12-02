@@ -3,8 +3,14 @@ import cv2
 import numpy as np
 import time
 import pickle
+import argparse
 
-pie_cam=False
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Face recognition with camera')
+parser.add_argument('--pie-cam', '--picam', action='store_true', 
+                    help='Use Raspberry Pi camera (default: False, uses webcam)')
+args = parser.parse_args()
+pie_cam = args.pie_cam
 if pie_cam:
     from picamera2 import Picamera2
 
@@ -118,4 +124,7 @@ while True:
 
 # By breaking the loop we run this code here which closes everything
 cv2.destroyAllWindows()
-picam2.stop()
+if pie_cam:
+    picam2.stop()
+else:
+    cap.release()

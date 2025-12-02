@@ -2,8 +2,14 @@ import cv2
 import os
 from datetime import datetime
 import time
+import argparse
 
-pie_cam=False
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Capture headshots with camera')
+parser.add_argument('--pie-cam', '--picam', action='store_true', 
+                    help='Use Raspberry Pi camera (default: False, uses webcam)')
+args = parser.parse_args()
+pie_cam = args.pie_cam
 
 if pie_cam:
     from picamera2 import Picamera2
@@ -65,7 +71,10 @@ def capture_photos(name):
     
     # Clean up
     cv2.destroyAllWindows()
-    picam2.stop()
+    if pie_cam:
+        picam2.stop()
+    else:
+        cap.release()
     print(f"Photo capture completed. {photo_count} photos saved for {name}.")
 
 if __name__ == "__main__":

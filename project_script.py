@@ -15,8 +15,14 @@ import matplotlib.pyplot as plt
 
 DURATION_SECONDS = 20   # total time to run (can be changed with --duration)
 CV_SCALER = 4           # downscale factor for face detection (higher = faster, less accurate)
-PIE_CAM = False         # set True on Raspberry Pi if using Picamera2
 MAX_FPS = 5          # maximum frames per second to process (None = process all frames)
+
+# Parse PIE_CAM argument at module level
+parser_module = argparse.ArgumentParser(add_help=False)
+parser_module.add_argument('--webcam', action='store_false', dest='pie_cam', default=True,
+                          help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)')
+args_module, _ = parser_module.parse_known_args()
+PIE_CAM = args_module.pie_cam
 
 if PIE_CAM:
     from picamera2 import Picamera2
@@ -289,8 +295,17 @@ def main():
         type=float,
         default=MAX_FPS,
     )
+    parser.add_argument(
+        "--webcam",
+        action='store_false',
+        dest='pie_cam',
+        default=True,
+        help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)',
+    )
 
     args = parser.parse_args()
+    # Update PIE_CAM from main parser (in case it was changed)
+    PIE_CAM = args.pie_cam
 
     min_conf_thresh = float(args.threshold)
     resW, resH = args.resolution.split("x")

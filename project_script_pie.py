@@ -1,12 +1,16 @@
 import argparse
 import time
 import pickle
+import os
 
 import cv2
 import numpy as np
 import face_recognition
 import tflite_runtime.interpreter as tflite
 from threading import Thread
+# Set matplotlib to use non-GUI backend before importing pyplot
+import matplotlib
+matplotlib.use('Agg')  # Use Agg backend (no GUI required)
 import matplotlib.pyplot as plt
 
 # -----------------------
@@ -232,7 +236,12 @@ def plot_detections_over_time(detections_log, total_duration):
     plt.grid(True)
     plt.legend(loc="upper right")
     plt.tight_layout()
-    plt.show()
+    
+    # Save plot to file instead of showing (works in headless environments)
+    output_file = "detections_over_time.png"
+    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    print(f"[INFO] Plot saved to {output_file}")
+    plt.close()  # Close the figure to free memory
 
 
 def print_detection_intervals(detections_log, max_gap=1.0):

@@ -200,6 +200,11 @@ def detect_objects(frame, interpreter, labels, min_conf_thresh, imW, imH):
             xmax = int(min(imW, boxes[i][3] * imW))
             
             label = labels[int(classes[i])]  # Look up object name from "labels" array using class index
+            
+            # Filter out "person" detections
+            if label.lower() == "person":
+                continue
+            
             # Store as (top, right, bottom, left)
             detections.append(
                 {

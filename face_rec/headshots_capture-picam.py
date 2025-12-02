@@ -6,16 +6,16 @@ import argparse
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Capture headshots with camera')
-parser.add_argument('--pie-cam', '--picam', action='store_true', 
-                    help='Use Raspberry Pi camera (default: False, uses webcam)')
+parser.add_argument('person_name', type=str, 
+                    help='Name of the person you are photographing')
+parser.add_argument('--webcam', action='store_false', dest='pie_cam', default=True,
+                    help='Use webcam instead of Raspberry Pi camera (default: use Pi camera)')
 args = parser.parse_args()
 pie_cam = args.pie_cam
+PERSON_NAME = args.person_name
 
 if pie_cam:
     from picamera2 import Picamera2
-
-# Change this to the name of the person you're photographing
-PERSON_NAME = "Shefeeq2"
 
 def create_folder(name):
     dataset_folder = "dataset"

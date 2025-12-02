@@ -255,12 +255,12 @@ def main():
     parser.add_argument(
         "--model",
         help="Path to the TFLite model file",
-        default="TFRPI/models/model.tflite",
+        default="tfrpie/models/model.tflite",
     )
     parser.add_argument(
         "--labels",
         help="Path to the labels file",
-        default="TFRPI/models/labels.txt",
+        default="tfrpie/models/labels.txt",
     )
     parser.add_argument(
         "--threshold",

@@ -1,0 +1,8 @@
+
+
+face-recognition
+imutils
+matplotlib
+opencv-python
+pillow
+tflite-runtime

@@ -372,6 +372,17 @@ def main():
         action="store_true",
         help="Run without showing OpenCV window (for headless / speed)",
     )
+    parser.add_argument(
+        "--output-video",
+        help="Path to save output video file (e.g., output.mp4). Video will play at real-time speed.",
+        default=None,
+    )
+    parser.add_argument(
+        "--video-fps",
+        help="FPS for output video (default: 30)",
+        type=float,
+        default=30.0,
+    )
 
     args = parser.parse_args()
     # Update PIE_CAM from main parser (in case it was changed)
@@ -407,6 +418,23 @@ def main():
     freq = cv2.getTickFrequency()
     experiment_start = time.time()
 
+    # Video recording setup
+    video_writer = None
+    if args.output_video:
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        video_fps = args.video_fps
+        video_writer = cv2.VideoWriter(
+            args.output_video, fourcc, video_fps, (imW, imH)
+        )
+        if not video_writer.isOpened():
+            print(f"[WARNING] Failed to open video writer for {args.output_video}")
+            video_writer = None
+        else:
+            print(f"[INFO] Recording video to {args.output_video} at {video_fps} FPS")
+    
+    # Video frame timing (for real-time playback)
+    video_frame_count = 0  # Track how many frames we've written to video
+
     # Frame rate limiting
     max_fps = args.max_fps
     frame_interval = 1.0 / max_fps if max_fps else None
@@ -419,6 +447,11 @@ def main():
 
     # Logging schedule
     last_log_time = -1e9  # big negative so first log always allowed
+    
+    # Timing statistics
+    face_times = []
+    obj_times = []
+    total_frame_times = []
 
     while True:
         now = time.time()
@@ -451,14 +484,20 @@ def main():
         run_face = (frame_idx % FACE_EVERY_N_FRAMES == 0)
         run_obj = (frame_idx % OBJ_EVERY_N_FRAMES == 0)
 
-        # Face recognition
+        # Face recognition timing
+        face_time = 0.0
         if run_face:
+            face_start = time.time()
             last_face_dets = recognize_faces(
                 frame, known_face_encodings, known_face_names, cv_scaler=CV_SCALER
             )
+            face_time = (time.time() - face_start) * 1000  # Convert to milliseconds
+            print(f"[TIMING] Frame {frame_idx} - Face Recognition: {face_time:.2f}ms ({len(last_face_dets)} faces)")
 
-        # Object detection
+        # Object detection timing
+        obj_time = 0.0
         if run_obj:
+            obj_start = time.time()
             last_obj_dets = detect_objects(
                 frame,
                 interpreter,
@@ -472,6 +511,8 @@ def main():
                 input_width,
                 floating_model,
             )
+            obj_time = (time.time() - obj_start) * 1000  # Convert to milliseconds
+            print(f"[TIMING] Frame {frame_idx} - Object Detection: {obj_time:.2f}ms ({len(last_obj_dets)} objects)")
 
         face_dets = last_face_dets
         obj_dets = last_obj_dets
@@ -565,10 +606,18 @@ def main():
             )
             current_obj_count += 1
 
-        # Calculate framerate
+        # Calculate framerate and total frame processing time
         t2 = cv2.getTickCount()
         time1 = (t2 - t1) / freq
         fps = 1.0 / time1 if time1 > 0 else 0.0
+        total_frame_time = time1 * 1000  # Convert to milliseconds
+        
+        # Store timing statistics
+        if run_face and face_time > 0:
+            face_times.append(face_time)
+        if run_obj and obj_time > 0:
+            obj_times.append(obj_time)
+        total_frame_times.append(total_frame_time)
 
         # Draw framerate and detection count in corner of frame
         cv2.putText(
@@ -591,6 +640,61 @@ def main():
             2,
             cv2.LINE_AA,
         )
+        
+        # Draw elapsed time on frame
+        time_str = f"Time: {elapsed:.1f}s"
+        cv2.putText(
+            frame,
+            time_str,
+            (15, 105),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 55),
+            2,
+            cv2.LINE_AA,
+        )
+        
+        # Draw processing times on frame
+        if run_face and face_time > 0:
+            face_time_str = f"Face: {face_time:.1f}ms"
+            cv2.putText(
+                frame,
+                face_time_str,
+                (15, 145),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
+        
+        if run_obj and obj_time > 0:
+            obj_time_str = f"Object: {obj_time:.1f}ms"
+            y_pos = 175 if (run_face and face_time > 0) else 145
+            cv2.putText(
+                frame,
+                obj_time_str,
+                (15, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+        # Write frames to video at real-time FPS
+        if video_writer:
+            # Calculate how many video frames should have been written by now based on real-time
+            expected_frame_count = int(elapsed * args.video_fps)
+            frames_to_write = expected_frame_count - video_frame_count
+            
+            # Write frames to maintain real-time playback (duplicate if processing is slow)
+            if frames_to_write > 0:
+                for _ in range(frames_to_write):
+                    video_writer.write(frame)
+                    video_frame_count += 1
+            # If we're ahead (processing is fast), we skip writing this frame
+            # This ensures video matches real-time even if processing is faster
 
         if show_window:
             cv2.imshow("Face + Object Detector", frame)
@@ -602,8 +706,67 @@ def main():
     if show_window:
         cv2.destroyAllWindows()
     videostream.stop()
+    
+    # Finalize video: ensure we have enough frames to match real-time duration
+    if video_writer:
+        total_duration = time.time() - experiment_start
+        final_frames_needed = int(total_duration * args.video_fps)
+        frames_remaining = final_frames_needed - video_frame_count
+        
+        # Write remaining frames to complete the video (use last processed frame)
+        if frames_remaining > 0:
+            # Get the last frame from the video stream if available
+            last_frame = videostream.read()
+            if last_frame is not None:
+                if PIE_CAM:
+                    if len(last_frame.shape) == 3 and last_frame.shape[2] == 4:
+                        last_frame = cv2.cvtColor(last_frame, cv2.COLOR_BGRA2BGR)
+                    elif len(last_frame.shape) == 3 and last_frame.shape[2] == 3:
+                        last_frame = cv2.cvtColor(last_frame, cv2.COLOR_RGB2BGR)
+                for _ in range(frames_remaining):
+                    video_writer.write(last_frame)
+        
+        video_writer.release()
+        print(f"[INFO] Video saved to {args.output_video} ({total_duration:.2f}s real-time, {final_frames_needed} frames)")
 
     total_duration = time.time() - experiment_start
+    
+    # Print timing statistics summary
+    print("\n" + "="*60)
+    print("PROCESSING TIME STATISTICS")
+    print("="*60)
+    if face_times:
+        avg_face_time = sum(face_times) / len(face_times)
+        min_face_time = min(face_times)
+        max_face_time = max(face_times)
+        print(f"Face Recognition:")
+        print(f"  - Frames processed: {len(face_times)}")
+        print(f"  - Average time: {avg_face_time:.2f}ms")
+        print(f"  - Min time: {min_face_time:.2f}ms")
+        print(f"  - Max time: {max_face_time:.2f}ms")
+    
+    if obj_times:
+        avg_obj_time = sum(obj_times) / len(obj_times)
+        min_obj_time = min(obj_times)
+        max_obj_time = max(obj_times)
+        print(f"Object Detection:")
+        print(f"  - Frames processed: {len(obj_times)}")
+        print(f"  - Average time: {avg_obj_time:.2f}ms")
+        print(f"  - Min time: {min_obj_time:.2f}ms")
+        print(f"  - Max time: {max_obj_time:.2f}ms")
+    
+    if total_frame_times:
+        avg_frame_time = sum(total_frame_times) / len(total_frame_times)
+        min_frame_time = min(total_frame_times)
+        max_frame_time = max(total_frame_times)
+        print(f"Total Frame Processing:")
+        print(f"  - Frames processed: {len(total_frame_times)}")
+        print(f"  - Average time: {avg_frame_time:.2f}ms")
+        print(f"  - Min time: {min_frame_time:.2f}ms")
+        print(f"  - Max time: {max_frame_time:.2f}ms")
+        print(f"  - Average FPS: {1000.0/avg_frame_time:.2f}")
+    print("="*60 + "\n")
+    
     print_detection_intervals(detections_log, max_gap=1.0)
     plot_detections_over_time(detections_log, total_duration)
 

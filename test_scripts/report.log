@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.4) (preloaded format=xelatex 2025.12.3)  3 DEC 2025 17:15
+This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.4) (preloaded format=xelatex 2025.12.3)  3 DEC 2025 17:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -925,13 +925,7 @@ File: image.png Graphic file (type bmp)
 <image.png>
  [1
 
-]
-Overfull \hbox (10.01619pt too wide) in paragraph at lines 149--153
-[]\TU/Aptos-Display(0)/m/n/10 The system combines two main components: (i) a Te
-nsorFlow Lite object detector based on SSD Mo-
- []
-
-(report.toc
+] (report.toc
 LaTeX Font Info:    Trying to load font information for U+msa on input line 2.
 
 (C:\Users\mshef\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
@@ -947,13 +941,13 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 
 [1]
-Overfull \hbox (17.3581pt too wide) in paragraph at lines 180--186
+Overfull \hbox (17.3581pt too wide) in paragraph at lines 162--168
 \TU/Aptos-Display(0)/m/n/10.95 software libraries used are OpenCV for image pro
 cessing, Picamera2 for camera control, \TU/lmtt/m/n/10.95 face_recognition
  []
 
 
-Overfull \hbox (39.29898pt too wide) in paragraph at lines 225--229
+Overfull \hbox (39.29898pt too wide) in paragraph at lines 207--211
 \TU/Aptos-Display(0)/m/n/10.95 camera. The script includes a \TU/lmtt/m/n/10.95
  --webcam \TU/Aptos-Display(0)/m/n/10.95 flag that switches between Picamera2 a
 nd OpenCV’s \TU/lmtt/m/n/10.95 VideoCapture(0)\TU/Aptos-Display(0)/m/n/10.95 .
@@ -961,21 +955,21 @@ nd OpenCV’s \TU/lmtt/m/n/10.95 VideoCapture(0)\TU/Aptos-Display(0)/m/n/10.95 .
 
 [2]
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 267.
+nput line 249.
  [3] [4] [5] [6] [7] [8]
-Underfull \hbox (badness 10000) in paragraph at lines 639--643
+Underfull \hbox (badness 10000) in paragraph at lines 621--625
 []\TU/Aptos-Display(0)/m/n/10.95 A. Priyadarshan.  TensorFlow-2-Lite-Object-Det
 ection-on-the-Raspberry-Pi (GitHub
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 639--643
+Underfull \hbox (badness 10000) in paragraph at lines 621--625
 \TU/Aptos-Display(0)/m/n/10.95 repository).  Available at: [][]$[][][][][] [] [
 ] [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 5519) in paragraph at lines 645--649
+Underfull \hbox (badness 5519) in paragraph at lines 627--631
 []\TU/Aptos-Display(0)/m/n/10.95 C. Dunn.  facial_recognition (GitHub repositor
 y).  Available at: [][]$[][][][][] [] [] [] [][][][][][] [] [][][] []
  []
@@ -995,11 +989,11 @@ Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 3B29F8F1003271F1D0C41E2BB3A30917;3396.
  ) 
 Here is how much of TeX's memory you used:
- 26261 strings out of 402987
- 519004 string characters out of 5448524
+ 26253 strings out of 402987
+ 518478 string characters out of 5448524
  1368071 words of memory out of 5000000
- 54602 multiletter control sequences out of 15000+600000
- 632921 words of font info for 83 fonts, out of 8000000 for 9000
+ 54597 multiletter control sequences out of 15000+600000
+ 632897 words of font info for 80 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  84i,12n,94p,419b,1882s stack positions out of 10000i,1000n,20000p,200000b,200000s
 

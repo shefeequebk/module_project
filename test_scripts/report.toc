@@ -1,17 +1,17 @@
-\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
-\contentsline {subsection}{\numberline {1.1}System Setup}{3}{subsection.1.1}%
-\contentsline {section}{\numberline {2}Methodology}{4}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Code Bases Used}{4}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Raspberry Pi and Camera Configuration}{4}{subsection.2.2}%
-\contentsline {subsection}{\numberline {2.3}Face Registration and Encodings}{5}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}Object Detection with TensorFlow Lite}{5}{subsection.2.4}%
-\contentsline {subsection}{\numberline {2.5}Combined Runtime Pipeline}{6}{subsection.2.5}%
-\contentsline {section}{\numberline {3}Results and Discussion}{7}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Overall Behaviour}{7}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Quantitative Summary}{9}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Scenario 1: Bright Indoor Room}{9}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}Scenario 2: Outdoor Overcast Daytime}{9}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}Scenario 3: Low Light and Backlighting}{9}{subsection.3.5}%
-\contentsline {subsection}{\numberline {3.6}Discussion of Image Sensor and ISP Effects}{10}{subsection.3.6}%
-\contentsline {subsection}{\numberline {3.7}Ethical Considerations}{10}{subsection.3.7}%
-\contentsline {section}{\numberline {4}Conclusion}{10}{section.4}%
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}System Setup}{2}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Methodology}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Code Bases Used}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Raspberry Pi and Camera Configuration}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Face Registration and Encodings}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Object Detection with TensorFlow Lite}{4}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Combined Runtime Pipeline}{4}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Results and Discussion}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Overall Behaviour}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Quantitative Summary}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Scenario 1: Bright Indoor Room}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Scenario 2: Outdoor Overcast Daytime}{8}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Scenario 3: Low Light and Backlighting}{8}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Discussion of Image Sensor and ISP Effects}{8}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Ethical Considerations}{8}{subsection.3.7}%
+\contentsline {section}{\numberline {4}Conclusion}{9}{section.4}%

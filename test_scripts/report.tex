@@ -89,7 +89,7 @@
 % ---------- Python listing style ----------
 \lstdefinestyle{mypython}{
     language=Python,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize,
     keywordstyle=\color{blue},
     commentstyle=\color{gray},
     stringstyle=\color{teal},
@@ -99,7 +99,10 @@
     numbers=left,
     numberstyle=\tiny,
     stepnumber=1,
-    numbersep=5pt
+    numbersep=3pt,
+    aboveskip=3pt,
+    belowskip=3pt,
+    lineskip=-1pt
 }
 \lstset{style=mypython}
 
@@ -111,8 +114,7 @@
 \newcommand{\RevisionTime}{03/12/2025 16:51}
 
 \begin{document}
-\pagenumbering{arabic}  % Start page numbering from 1
-\setcounter{page}{1}    % Ensure first page is page 1
+\pagenumbering{gobble}  % Suppress page numbering on title page
 
 % ---------- Title page ----------
 \thispagestyle{empty}  % No header/footer/page numbers on title page
@@ -140,6 +142,8 @@
 \end{center}
 \vspace{2cm}
 \newpage
+\pagenumbering{arabic}  % Start page numbering from 1
+\setcounter{page}{1}    % Ensure first content page is page 1
 
 % ---------- Abstract ----------
 \begin{abstract}
@@ -164,8 +168,6 @@ white balance and noise affect the performance.
 \end{abstract}
 
 \tableofcontents
-\newpage
-
 % ============================================================
 \section{Introduction}
 % ============================================================
@@ -213,7 +215,8 @@ Figure~\ref{fig:setup} shows the hardware setup, including the student ID card.
     }{%
         \fbox{\parbox{0.8\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_setup\_placeholder.jpg\\Place your setup photo here]\vspace{2cm}}}}%
     }
-    \caption{Raspberry Pi~4 and camera setup for the experiment.\label{fig:setup}}
+    \vspace{-0.3cm}
+    \caption{\footnotesize Raspberry Pi~4 and camera setup for the experiment.\label{fig:setup}}
 \end{figure}
 
 I initially developed and debugged the code on my laptop by using webcam instead of the
@@ -335,7 +338,6 @@ def load_tflite_model(model_path, labels_path):
            input_height, input_width, floating_model
 \end{lstlisting}
 
-
 I filter out the COCO \texttt{'person'} class from the object detector, because faces are already
 handled separately by the face recognition pipeline, and I kept only \emph{cell phone} for the object detection.
 
@@ -365,10 +367,8 @@ while True:
     if frame_full is None:
         continue
 
-    # For safety, update full width/height
     full_h, full_w = frame_full.shape[:2]
 
-    # Make a smaller copy for processing
     frame_proc = cv2.resize(frame_full, (PROC_W, PROC_H))
 
     frame_idx += 1
@@ -385,11 +385,9 @@ while True:
             input_details, output_details, input_height,
             input_width, floating_model
         )
-
     # Scale detections from processed to full frame
     scale_x = full_w / float(PROC_W)
     scale_y = full_h / float(PROC_H)
-
     face_dets_full = []
     for det in face_dets_proc:
         top_p, left_p, bottom_p, right_p = det["box"]
@@ -398,7 +396,6 @@ while True:
         bottom = int(bottom_p * scale_y)
         right  = int(right_p  * scale_x)
         face_dets_full.append({**det, "box": (top, left, bottom, right)})
-
     obj_dets_full = []
     for det in obj_dets_proc:
         top_p, left_p, bottom_p, right_p = det["box"]
@@ -407,7 +404,6 @@ while True:
         bottom = int(bottom_p * scale_y)
         right  = int(right_p  * scale_x)
         obj_dets_full.append({**det, "box": (top, left, bottom, right)})
-
     # Log detections for later analysis
     for det in face_dets_full:
         detections_log.append({
@@ -424,8 +420,6 @@ while True:
             "confidence": det["confidence"],
         })
 
-    # Draw boxes on full frame (faces = yellow, objects = green)
-    # [Drawing code omitted here; see submitted script]
 \end{lstlisting}
 
 At the end of the run, \texttt{detections\_log} is passed to a plotting function that creates the required
@@ -455,35 +449,35 @@ Long gaps in a person's curve indicate intervals where the face was not detected
 
 \begin{figure}[H]
     \centering
-    % Replace filename with your generated plot for Scenario 1, e.g. fig_detections_scenario1.jpg
     \IfFileExists{fig_detections_scenario1.jpg}{%
-        \includegraphics[width=0.7\linewidth]{fig_detections_scenario1.jpg}%
+        \includegraphics[width=0.8\linewidth]{fig_detections_scenario1.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario1.jpg\\Place your confidence plot for Scenario 1 here]\vspace{2cm}}}}%
     }
-    \caption{Confidence over time for different people and objects in Scenario~1: Bright indoor room.\label{fig:timeline1}}
+    \vspace{-0.5cm}
+    \caption{\footnotesize Confidence over time for different people and objects in Scenario~1: Bright indoor room.\label{fig:timeline1}}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    % Replace filename with your generated plot for Scenario 2, e.g. fig_detections_scenario2.jpg
     \IfFileExists{fig_detections_scenario2.jpg}{%
-        \includegraphics[width=0.7\linewidth]{fig_detections_scenario2.jpg}%
+        \includegraphics[width=0.8\linewidth]{fig_detections_scenario2.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario2.jpg\\Place your confidence plot for Scenario 2 here]\vspace{2cm}}}}%
     }
-    \caption{Confidence over time for different people and objects in Scenario~2: Outdoor overcast daytime.\label{fig:timeline2}}
+    \vspace{-0.5cm}
+    \caption{\footnotesize Confidence over time for different people and objects in Scenario~2: Outdoor overcast daytime.\label{fig:timeline2}}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    % Replace filename with your generated plot for Scenario 3, e.g. fig_detections_scenario3.jpg
     \IfFileExists{fig_detections_scenario3.jpg}{%
-        \includegraphics[width=0.7\linewidth]{fig_detections_scenario3.jpg}%
+        \includegraphics[width=0.8\linewidth]{fig_detections_scenario3.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario3.jpg\\Place your confidence plot for Scenario 3 here]\vspace{2cm}}}}%
     }
-    \caption{Confidence over time for different people and objects in Scenario~3: Indoor low light with strong backlighting.\label{fig:timeline3}}
+    \vspace{-0.5cm}
+    \caption{\footnotesize Confidence over time for different people and objects in Scenario~3: Indoor low light with strong backlighting.\label{fig:timeline3}}
 \end{figure}
 
 The script also prints textual summaries of intervals, for example:
@@ -497,8 +491,6 @@ The script also prints textual summaries of intervals, for example:
 \texttt{  from 1.9s to 1.9s (duration 0.0s)}\\
 \texttt{  from 3.8s to 4.9s (duration 1.1s)}
 \end{quote}
-
-
 
 \subsection{Quantitative Summary}
 
@@ -581,19 +573,11 @@ and show how those concepts appear in a practical embedded system.
 
 \subsection{Ethical Considerations}
 
-Face recognition systems raise important ethical questions:
-
-\begin{itemize}
-    \item \textbf{Privacy and consent:}
-          All people in my experiments gave consent to be recorded, and the system was used only
-          for this coursework. In real use, clear consent and data protection policies would be needed.
-    \item \textbf{Data storage:}
-          Face encodings are stored in a file (\texttt{encodings.pickle}). In a real deployment,
-          this file should be encrypted and access controlled.
-    \item \textbf{Bias and fairness:}
-          A small training set with only a few people can lead to bias. A real system would require
-          much more diverse training data to avoid systematic errors.
-\end{itemize}
+Face recognition systems raise important ethical questions. All people in my experiments gave consent to be recorded,
+ and the system was used only for this coursework. In real use, clear consent and data protection policies would be needed.
+  Face encodings are stored in a file (\texttt{encodings.pickle}),
+   which should be encrypted and access controlled in a real deployment. A small training set with only a few people
+    can lead to bias, a real system would require much more diverse training data to avoid systematic errors.
 
 % ============================================================
 \section{Conclusion}
@@ -658,7 +642,7 @@ T.~V.~Vignesh.
 \bibitem{picamera2docs}
 OKDO.
 \newblock OKDO 5MP camera documentation.
-\newblock Available at: \url{https://www.okdo.com/}.
+\newblock Available at: \url{https://docs.rs-online.com/b064/A700000006917308.pdf}.
 Accessed: 2025.
 
 \end{thebibliography}

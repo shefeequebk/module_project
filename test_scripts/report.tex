@@ -111,34 +111,56 @@
 \newcommand{\RevisionTime}{03/12/2025 16:51}
 
 \begin{document}
+\pagenumbering{arabic}  % Start page numbering from 1
+\setcounter{page}{1}    % Ensure first page is page 1
 
 % ---------- Title page ----------
-\begin{titlepage}
-    \thispagestyle{plain}  % No header/footer on title page
-    % Image in top left corner with small gap
-    \begin{tikzpicture}[remember picture,overlay]
-        \node[anchor=north west,inner sep=1.2cm] at ($(current page.north west)$) {%
-            \includegraphics[width=6cm]{image.png}%
-        };
-    \end{tikzpicture}
-    
-    % Centered content (everything except image is centered)
-    \vspace*{\fill}
-    \begin{center}
-        {\Large Module Project Report for\\[0.3cm]
-        \textbf{\ModuleName}\par}
-        \vspace{4cm}
-        {\large
-            \textbf{Student Name :} \textbf{\StudentName}\\[0.5cm]
-            \textbf{Student ID :} \textbf{\StudentID}
-        }
-    \end{center}
-    \vspace*{\fill}
-    \begin{center}
-        {\large Revision Timestamp: \RevisionTime}
-    \end{center}
-    \vspace{2cm}
-\end{titlepage}
+\thispagestyle{empty}  % No header/footer/page numbers on title page
+% Image in top left corner with small gap 
+\begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,inner sep=1.2cm] at ($(current page.north west)$) {%
+        \includegraphics[width=6cm]{image.png}%
+    };
+\end{tikzpicture}
+
+% Centered content (everything except image is centered)
+\vspace*{\fill}
+\begin{center}
+    {\Large Module Project Report for\\[0.3cm]
+    \textbf{\ModuleName}\par}
+    \vspace{4cm}
+    {\large
+        \textbf{Student Name :} \textbf{\StudentName}\\[0.5cm]
+        \textbf{Student ID :} \textbf{\StudentID}
+    }
+\end{center}
+\vspace*{\fill}
+\begin{center}
+    {\large Revision Timestamp: \RevisionTime}
+\end{center}
+\vspace{2cm}
+\newpage
+
+% ---------- Abstract ----------
+\begin{abstract}
+\noindent
+This project builds a complete computer vision system on a Raspberry~Pi~4 with a camera.
+The system observes a changing group of people and objects for 20~seconds and shows, in real-time,
+the name and confidence of each detected face and object as a bounding box caption.
+The student (myself) is always one of the registered people and holds their student card at some point.
+At least one person leaves and later returns to the scene during each recording.
+
+The system combines two main components: (i) a TensorFlow Lite object detector based on SSD~MobileNet
+running on the Raspberry Pi, and (ii) a face recognition pipeline using the \texttt{face\_recognition} library.
+I started development on my laptop using a webcam for easier debugging and then deployed the
+final version to the Raspberry Pi~4 using the Picamera2 library with \texttt{BGR888} capture format.
+
+During each 20-second run, the program logs all detections, generates a plot of confidence over time,
+and summarises the intervals where each person or object was successfully identified.
+The system is evaluated in at least three different lighting scenarios (bright indoor, outdoor daytime,
+and low-light/backlit) and I discuss how image sensor and ISP concepts such as exposure, gain,
+white balance and noise affect the performance.
+\end{abstract}
 
 \tableofcontents
 \newpage
@@ -646,6 +668,6 @@ Raspberry Pi Ltd.
 Accessed: 2025.
 
 \end{thebibliography}
-
 \label{LastPage}  % Label for total page count
+
 \end{document}

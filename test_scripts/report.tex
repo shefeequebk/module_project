@@ -457,7 +457,7 @@ Long gaps in a person's curve indicate intervals where the face was not detected
     \centering
     % Replace filename with your generated plot for Scenario 1, e.g. fig_detections_scenario1.jpg
     \IfFileExists{fig_detections_scenario1.jpg}{%
-        \includegraphics[width=0.9\linewidth]{fig_detections_scenario1.jpg}%
+        \includegraphics[width=0.7\linewidth]{fig_detections_scenario1.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario1.jpg\\Place your confidence plot for Scenario 1 here]\vspace{2cm}}}}%
     }
@@ -468,7 +468,7 @@ Long gaps in a person's curve indicate intervals where the face was not detected
     \centering
     % Replace filename with your generated plot for Scenario 2, e.g. fig_detections_scenario2.jpg
     \IfFileExists{fig_detections_scenario2.jpg}{%
-        \includegraphics[width=0.9\linewidth]{fig_detections_scenario2.jpg}%
+        \includegraphics[width=0.7\linewidth]{fig_detections_scenario2.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario2.jpg\\Place your confidence plot for Scenario 2 here]\vspace{2cm}}}}%
     }
@@ -479,7 +479,7 @@ Long gaps in a person's curve indicate intervals where the face was not detected
     \centering
     % Replace filename with your generated plot for Scenario 3, e.g. fig_detections_scenario3.jpg
     \IfFileExists{fig_detections_scenario3.jpg}{%
-        \includegraphics[width=0.9\linewidth]{fig_detections_scenario3.jpg}%
+        \includegraphics[width=0.7\linewidth]{fig_detections_scenario3.jpg}%
     }{%
         \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario3.jpg\\Place your confidence plot for Scenario 3 here]\vspace{2cm}}}}%
     }
@@ -490,13 +490,15 @@ The script also prints textual summaries of intervals, for example:
 
 \begin{quote}
 \small
-\texttt{- SID (face): from 1.2s to 18.5s (duration 17.3s)}\\
-\texttt{- CELL\_PHONE (object): from 3.0s to 19.5s (duration 16.5s)}\\
-\texttt{- FRIEND\_A (face): from 2.5s to 7.0s and from 12.0s to 19.0s}
+\texttt{- Shefeeque (face):}\\
+\texttt{  from 6.2s to 6.2s (duration 0.0s)}\\
+\texttt{  from 8.7s to 8.8s (duration 0.1s)}\\
+\texttt{- cell phone (object):}\\
+\texttt{  from 1.9s to 1.9s (duration 0.0s)}\\
+\texttt{  from 3.8s to 4.9s (duration 1.1s)}
 \end{quote}
 
-This clearly shows that \texttt{FRIEND\_A} left the scene around 7~s and returned around 12~s,
-as required by the project description.
+
 
 \subsection{Quantitative Summary}
 
@@ -506,13 +508,15 @@ The frame rate values are averaged over the 20~seconds based on the timing infor
 \begin{table}[H]
     \centering
     \caption{Summary of performance in different scenarios.\label{tab:summary}}
-    \begin{tabular}{|l|c|c|c|}
+    \begin{tabular}{|l|c|p{4.5cm}|p{4.5cm}|}
     \hline
     Scenario & Avg.\ FPS & Face recognition quality & Object detection quality \\
     \hline
-    Bright indoor & $\approx$ 10--12 & High, stable confidence ($>0.8$) & Reliable for target object \\
-    Outdoor daytime & $\approx$ 9--11 & Good, some variation & Good, occasional false positives \\
-    Low light / backlit & $\approx$ 7--9 & Unstable, drops below 0.6 & Weaker, missed some frames \\
+    Bright indoor & $\approx$ 1--3 & Stable confidence ($\geq 0.5$), higher for faces, $\approx 0.5$ for cell phone & Cell phone detected with $\approx 0.5$ confidence, false positives present \\
+    \hline
+    Outdoor daytime & $\approx$ 2--3 & Less stable, lower than Scenario~1 & Lower confidence. \\
+    \hline
+    Low light / backlit & $\approx$ 2--3 & Very low confidence, highly fluctuating & Cell phone detected only for short periods, very fluctuating, false positives present \\
     \hline
     \end{tabular}
 \end{table}
@@ -522,40 +526,37 @@ people entering and leaving the scene. However, performance clearly depends on l
 
 \subsection{Scenario 1: Bright Indoor Room}
 
-In the bright indoor scenario, the Pi camera sensor receives a strong signal and the ISP can keep
-gain low, so noise is limited. Faces are detected with high confidence
-and recognition is stable across the whole 20~seconds.
+In the bright indoor scenario, the camera sensor receives a strong signal and the ISP can keep
+gain low, so noise is limited. Face recognition confidence is stable, typically around 0.5 or higher.
+Faces generally achieve higher confidence values than the cell phone object, which typically
+maintains confidence around 0.5. The system runs at approximately 1--3 FPS.
 
-The average face recognition confidence for my own face was above 0.9 for most frames, and the
-\texttt{detections\_log} showed almost continuous coverage. The static object (e.g.\ a mobile phone)
-was also detected reliably by the SSD MobileNet model whenever it was in the field of view.
+The \texttt{detections\_log} showed stable detection intervals for faces throughout the 20~seconds.
+The cell phone object was detected with consistent confidence around 0.5.
 
 \subsection{Scenario 2: Outdoor Overcast Daytime}
 
-Outdoors with soft natural light, the system behaved similarly to the bright indoor case,
-but there were more changes in illumination when people moved. The auto-exposure and
-auto white-balance in the ISP had to adjust more often \cite{dennyISP}, which caused
-small drops in confidence during transitions.
+Outdoors with soft natural light, the system achieved similar frame rates (approximately 2--3 FPS)
+as Scenario~1. However, confidence values were less stable and generally lower than in the bright
+indoor scenario. The auto-exposure and auto white-balance in the ISP had to adjust more often
+\cite{dennyISP}, which contributed to the reduced stability in confidence measurements.
 
-The confidence plot shows slightly more noise, but overall the system still worked well.
-Faces were correctly recognised when they faced the camera and were not too far away.
+The confidence plot shows more variation compared to Scenario~1, with confidence values fluctuating
+more noticeably.
 
 \subsection{Scenario 3: Low Light and Backlighting}
 
 The low-light and backlit scenario was the most challenging. When the background window
 was much brighter than the people, the sensor had to choose between over-exposing the
 window or under-exposing the faces. In practice, the faces were often darker and noisier.
+The system maintained approximately 2--3 FPS, similar to the other scenarios.
 
 According to the image sensor theory, increasing analog gain in low light amplifies both
 signal and noise, reducing the effective signal-to-noise ratio.
-This explains why face detection and recognition confidence dropped during these periods.
-Sometimes faces were not detected at all for several frames, which appears as gaps in
-the confidence plot.
-
-The simple quality heuristic in the code often triggered warnings in this scenario,
-indicating low average confidence. These warnings correctly suggested poor lighting
-or the need to move closer to the camera. When we added an extra lamp in the room,
-the performance improved noticeably, confirming that lighting was the main issue.
+This explains why face detection and recognition confidence was very low and highly
+fluctuating during these periods. The cell phone object was detected only for short
+periods, with very unstable confidence values and sometimes faces were not detected at all for several frames,
+which appears as gaps in the confidence plot.
 
 \subsection{Discussion of Image Sensor and ISP Effects}
 
@@ -572,7 +573,7 @@ Across the three scenarios, the behaviour can be linked directly to sensor and I
           Backlit scenes exceed the dynamic range of the sensor, so either faces or the background
           get clipped.
     \item \textbf{Auto white-balance:}
-          Sudden colour temperature changes can temporarily distort skin tones until AWB settles.
+          Sudden colour temperature changes can temporarily distort skin tones until the AWB settles.
 \end{itemize}
 
 These observations match what was discussed in the lectures about image sensors and ISP pipelines
@@ -611,8 +612,7 @@ The system:
 
 I first developed and debugged the code on my laptop with a webcam and then ran the final
 training and inference fully on the Raspberry~Pi using the OKDO 5MP camera and TensorFlow Lite.
-The system met the assignment requirements, and the experiments showed how careful control
-of lighting and camera configuration is essential for reliable embedded vision systems.
+This experiments showed how careful control of lighting and camera configuration is essential for reliable embedded vision systems.
 
 Possible future improvements include better automatic quality feedback (for example, changing
 camera exposure settings when average brightness is too low), more robust tracking of people

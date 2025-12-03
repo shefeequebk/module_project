@@ -144,16 +144,17 @@
 % ---------- Abstract ----------
 \begin{abstract}
 \noindent
-This project builds a complete computer vision system on a Raspberry~Pi~4 with a camera.
+This project builds a complete computer vision system on a Raspberry Pi 4 with a camera.
 The system observes a changing group of people and objects for 20~seconds and shows, in real-time,
 the name and confidence of each detected face and object as a bounding box caption.
-The student (myself) is always one of the registered people and holds their student card at some point.
+The student (myself) is always one of the registered people and holds my student ID card.
 At least one person leaves and later returns to the scene during each recording.
 
-The system combines two main components: (i) a TensorFlow Lite object detector based on SSD~MobileNet
-running on the Raspberry Pi, and (ii) a face recognition pipeline using the \texttt{face\_recognition} library.
+The system combines two main components: (i) a TensorFlow Lite object detector based on SSD
+MobileNet running on the Raspberry Pi, and (ii) a face recognition pipeline using the
+\texttt{face\_recognition} library.
 I started development on my laptop using a webcam for easier debugging and then deployed the
-final version to the Raspberry Pi~4 using the Picamera2 library with \texttt{BGR888} capture format.
+final version to the Raspberry Pi~4 using the OKDO 5MP camera with \texttt{BGR888} capture format.
 
 During each 20-second run, the program logs all detections, generates a plot of confidence over time,
 and summarises the intervals where each person or object was successfully identified.
@@ -174,24 +175,22 @@ that can identify several known people and at least one object in a live camera 
 The system must:
 
 \begin{itemize}
-    \item Observe a group of at least four people and one object for 20~seconds.
+    \item Observe a group of at least four people and one object for 20 seconds.
     \item Display the label and confidence for each recognised face and object in real time.
-    \item Detect when a person enters, leaves, and then re-enters the scene.
     \item Produce a time-based plot of detections and confidence scores at the end of the run.
     \item Comment on the overall quality of detections and relate problems to image sensor and ISP concepts.
 \end{itemize}
 
-The hardware platform is a Raspberry~Pi~4 with a Raspberry Pi camera and Raspberry Pi OS.
-The main software libraries used are OpenCV for image processing, Picamera2 for camera control,
-\texttt{face\_recognition} for face feature extraction, and TensorFlow Lite for object detection.
-The design of the system is guided by material from the module on image sensors, ISP pipelines,
-and embedded vision systems, for example exposure, gain, dynamic range and noise handling
-(see e.g.\ \cite{dennyISP,dennySensors}).
+The hardware platform is a Raspberry Pi 4 with a Raspberry Pi camera.
+The main software libraries used are OpenCV for image processing, Picamera2 for camera
+control, \texttt{face\_recognition} for face feature extraction, and TensorFlow Lite for
+object detection \cite{vigneshLab3,vigneshLab5}.
+The design of the system is guided by content and experiments from the labs of the module covering image sensors, ISP pipelines.
+\cite{dennyISP}.
 
-The core of the project is a single Python script that reads frames from the camera, resizes them to a
-processing resolution, runs both face recognition and object detection, overlays the detections on the
-full-resolution frame, and logs all detections for later analysis. The final script used for the project
-is included separately in the submitted ZIP file as required by the assignment.
+In the project, I implemented a Python script that captures camera frames, resizes them for processing,
+ runs face recognition and object detection, draws the results on the image,
+  and saves a plot of detections over time. 
 
 \subsection{System Setup}
 
@@ -199,37 +198,28 @@ The physical setup consists of:
 
 \begin{itemize}
     \item Raspberry~Pi~4 (4\,GB RAM).
-    \item Raspberry Pi camera module configured via Picamera2.
-    \item Tripod or stand for the camera, aimed at an area where people can move in and out.
-    \item A small static object (e.g.\ an \emph{apple} or a \emph{mobile phone}) that is visible in the scene.
-    \item An HDMI monitor or remote viewing via VNC/SSH.
+    \item OKDO 5MP camera module.
+    \item Tripod for the camera, aimed at an area where people can move in and out.
+    \item An object (a \emph{cell phone}) that is visible in the scene.
 \end{itemize}
 
-Figure~\ref{fig:setup} shows the hardware setup, including the student ID card required by the brief.
+Figure~\ref{fig:setup} shows the hardware setup, including the student ID card.
 
 \begin{figure}[H]
     \centering
     % Replace placeholder image name with your own file, e.g. setup_photo.jpg
-    \IfFileExists{fig_setup_placeholder.png}{%
-        \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.png}%
+    \IfFileExists{fig_setup_placeholder.jpg}{%
+        \includegraphics[width=0.6\linewidth]{fig_setup_placeholder.jpg}%
     }{%
-        \IfFileExists{fig_setup_placeholder.jpg}{%
-            \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.jpg}%
-        }{%
-            \IfFileExists{fig_setup_placeholder.pdf}{%
-                \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.pdf}%
-            }{%
-                \fbox{\parbox{0.8\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_setup\_placeholder]\\Place your setup photo here}\vspace{2cm}}}%
-            }%
-        }%
+        \fbox{\parbox{0.8\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_setup\_placeholder.jpg\\Place your setup photo here]\vspace{2cm}}}}%
     }
-    \caption{Raspberry Pi~4 and camera setup for the experiment (student holding ID card).\label{fig:setup}}
+    \caption{Raspberry Pi~4 and camera setup for the experiment.\label{fig:setup}}
 \end{figure}
 
-I initially developed and debugged the code on my laptop by using a USB webcam instead of the Pi camera.
-The script includes a \texttt{--webcam} flag that switches between Picamera2 and OpenCV's
-\texttt{VideoCapture(0)}. Once the pipeline was stable on the laptop, I cloned the GitHub repository
-on the Raspberry~Pi and ran the training and inference completely on the Pi.
+I initially developed and debugged the code on my laptop by using webcam instead of the
+OKDO 5MP camera. The script includes a \texttt{--webcam} flag that switches between the Picamera2 and
+OpenCV's \texttt{VideoCapture(0)}. Once the pipeline was stable on the laptop, I cloned the
+GitHub repository on the Raspberry Pi and ran the training and inference completely on the Raspberry Pi.
 
 % ============================================================
 \section{Methodology}
@@ -238,14 +228,14 @@ on the Raspberry~Pi and ran the training and inference completely on the Pi.
 This section describes the steps taken to build the system, including dataset preparation,
 face encoding, object detection, the combined runtime pipeline, and logging of detections.
 
-\subsection{Code Bases Used and Adapted}
+\subsection{Code Bases Used}
 
-Two open-source repositories formed the basis of this project:
+Two open-source repositories were used as the basis of this project:
 
 \begin{itemize}
     \item TensorFlow Lite object detection on Raspberry Pi
-    \cite{armaanTFLite}: used as the starting point for SSD MobileNet v2 object detection
-          and the TFLite inference loop.
+    \cite{armaanTFLite,vigneshLab5}: used as the basis for SSD MobileNet v2 object detection
+          and the TFLite.
     \item Caroline Dunn's face recognition demo \cite{dunnFaceRec}: used for face encoding,
           saving encodings to a \texttt{.pickle} file, and matching faces at run time.
 \end{itemize}
@@ -253,20 +243,17 @@ Two open-source repositories formed the basis of this project:
 I combined these two ideas into a single Python script that:
 
 \begin{enumerate}
-    \item Captures frames from Picamera2 in \texttt{BGR888} format at a full resolution of
-          1640\,$\times$\,1232.
-    \item Downscales a copy of each frame to a processing resolution (1280\,$\times$\,720) for speed.
+    \item Captures frames from the OKDO 5MP camera in \texttt{BGR888} format.
     \item Runs face recognition on the processed frame using \texttt{face\_recognition}.
     \item Runs an SSD MobileNet TFLite object detector on the same processed frame.
-    \item Maps detections back onto the full-resolution frame to draw bounding boxes.
+    \item Draws detection bounding boxes on the frame.
     \item Logs the time, label, type (face or object), and confidence for every detection.
 \end{enumerate}
 
 \subsection{Raspberry Pi and Camera Configuration}
 
-The Raspberry~Pi~4 runs Raspberry Pi OS (64-bit) with Python~3. The camera is configured using Picamera2.
-Following the project brief and the Picamera2 documentation, I used the following configuration
-in the final script:
+The Raspberry~Pi~4 runs Raspberry Pi OS (64-bit) with Python~3. The OKDO 5MP camera is configured
+for the project. I used the following configuration in the final script:
 
 \begin{lstlisting}[language=Python, caption={Picamera2 configuration used in the final script.}, label={lst:picam}]
 from picamera2 import Picamera2
@@ -275,7 +262,7 @@ import time
 picam2 = Picamera2()
 
 config = picam2.create_preview_configuration(
-    main={"format": "BGR888", "size": (1640, 1232)},
+    main={"format": "BGR888",  "size": (imW, imH)},
     controls={"AwbMode": 1, "Saturation": 1.0}
 )
 picam2.configure(config)
@@ -292,7 +279,7 @@ so that the camera adapts to changes in colour temperature between scenarios.
 
 Face recognition follows the workflow from \cite{dunnFaceRec}.
 First, I collected a small set of images for each person that appears in the video, including myself.
-Each person has at least three images in a \texttt{faces/} directory.
+For each individual, I collected at least twelve photos and saved them in the \texttt{faces/} directory.
 I then used a separate script (submitted in the ZIP file) to build encodings:
 
 \begin{enumerate}
@@ -307,7 +294,7 @@ The encodings are stored in a \texttt{encodings.pickle} file that is loaded by t
 \begin{lstlisting}[language=Python, caption={Loading face encodings in the main script.}, label={lst:encodings}]
 import pickle
 
-def load_face_encodings(path="face_rec/encodings.pickle"):
+def load_face_encodings(path="encodings.pickle"):
     print("[INFO] loading face encodings...")
     with open(path, "rb") as f:
         data = pickle.loads(f.read())
@@ -325,7 +312,7 @@ Confidence is computed as a simple mapping of distance to a value in $[0,1]$.
 \subsection{Object Detection with TensorFlow Lite}
 
 For object detection I used a TFLite SSD MobileNet model, following the TensorFlow-2-Lite
-Raspberry Pi repository \cite{armaanTFLite}. The model and label file are loaded once:
+Raspberry Pi repository \cite{armaanTFLite} and Lab-5 materials \cite{vigneshLab5}. The model and label file are loaded once:
 
 \begin{lstlisting}[language=Python, caption={Loading a TFLite object detection model.}, label={lst:tflite}]
 import tflite_runtime.interpreter as tflite
@@ -348,12 +335,9 @@ def load_tflite_model(model_path, labels_path):
            input_height, input_width, floating_model
 \end{lstlisting}
 
-On each processed frame (\texttt{frame\_proc}), I convert it to RGB, resize it to the network
-input size, normalise it if necessary and run \texttt{interpreter.invoke()}.
-Bounding boxes are then rescaled back to the processed resolution.
-I filter out the COCO \texttt{person} class from the object detector, because faces are already
-handled separately by the face recognition pipeline, and I kept only a small white-list of objects
-(e.g.\ \emph{apple}, \emph{cell phone}) that are present in the scene.
+
+I filter out the COCO \texttt{'person'} class from the object detector, because faces are already
+handled separately by the face recognition pipeline, and I kept only \emph{cell phone} for the object detection.
 
 \subsection{Combined Runtime Pipeline}
 
@@ -447,21 +431,6 @@ while True:
 At the end of the run, \texttt{detections\_log} is passed to a plotting function that creates the required
 time-based confidence plot and also prints out intervals where each label was present.
 
-\subsection{Quality Assessment Heuristic}
-
-To satisfy the requirement of reporting on detection quality, I added a simple heuristic.
-For each time step, I compute the average face confidence. If it is very low or if no faces
-are detected for several seconds even though people are expected to be in the frame,
-the script prints a warning such as:
-
-\begin{itemize}
-    \item ``Warning: low face confidence, scene may be too dark or camera may be out of focus.''
-    \item ``Warning: faces lost for more than 3 seconds; check exposure or people too far away.''
-\end{itemize}
-
-These warnings are then interpreted in the Results and Discussion section in terms of
-image sensor and ISP behaviour, such as reduced signal-to-noise ratio in low light and motion blur.
-
 % ============================================================
 \section{Results and Discussion}
 % ============================================================
@@ -475,32 +444,46 @@ I ran the system for 20~seconds in three different scenarios:
           behind the group.
 \end{enumerate}
 
-In each case, at least four people and one object (\emph{apple} or \emph{mobile phone}) were visible.
-One person intentionally left and then re-entered the frame during the 20~seconds.
+In each case, at least four people and one object (\emph{mobile phone}) were visible.
+One person intentionally left the scene during the 20~seconds.
 
 \subsection{Overall Behaviour}
 
-Figure~\ref{fig:timeline} (placeholder) shows an example plot of detection confidence over time
-for the different labels in one scenario. Each coloured curve corresponds to a person or object.
+Figures~\ref{fig:timeline1},~\ref{fig:timeline2}, and~\ref{fig:timeline3} show plots of detection confidence over time for the different labels
+in each of the three scenarios. Each coloured curve corresponds to a person or object.
 Long gaps in a person's curve indicate intervals where the face was not detected or recognised.
 
 \begin{figure}[H]
     \centering
-    % Replace filename with your generated plot, e.g. detections_over_time.png
-    \IfFileExists{fig_detections_over_time_placeholder.png}{%
-        \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.png}%
+    % Replace filename with your generated plot for Scenario 1, e.g. fig_detections_scenario1.jpg
+    \IfFileExists{fig_detections_scenario1.jpg}{%
+        \includegraphics[width=0.9\linewidth]{fig_detections_scenario1.jpg}%
     }{%
-        \IfFileExists{fig_detections_over_time_placeholder.jpg}{%
-            \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.jpg}%
-        }{%
-            \IfFileExists{fig_detections_over_time_placeholder.pdf}{%
-                \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.pdf}%
-            }{%
-                \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_over\_time\_placeholder]\\Place your confidence plot here}\vspace{2cm}}}%
-            }%
-        }%
+        \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario1.jpg\\Place your confidence plot for Scenario 1 here]\vspace{2cm}}}}%
     }
-    \caption{Example confidence over time for different people and objects.\label{fig:timeline}}
+    \caption{Confidence over time for different people and objects in Scenario~1: Bright indoor room.\label{fig:timeline1}}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % Replace filename with your generated plot for Scenario 2, e.g. fig_detections_scenario2.jpg
+    \IfFileExists{fig_detections_scenario2.jpg}{%
+        \includegraphics[width=0.9\linewidth]{fig_detections_scenario2.jpg}%
+    }{%
+        \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario2.jpg\\Place your confidence plot for Scenario 2 here]\vspace{2cm}}}}%
+    }
+    \caption{Confidence over time for different people and objects in Scenario~2: Outdoor overcast daytime.\label{fig:timeline2}}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % Replace filename with your generated plot for Scenario 3, e.g. fig_detections_scenario3.jpg
+    \IfFileExists{fig_detections_scenario3.jpg}{%
+        \includegraphics[width=0.9\linewidth]{fig_detections_scenario3.jpg}%
+    }{%
+        \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_scenario3.jpg\\Place your confidence plot for Scenario 3 here]\vspace{2cm}}}}%
+    }
+    \caption{Confidence over time for different people and objects in Scenario~3: Indoor low light with strong backlighting.\label{fig:timeline3}}
 \end{figure}
 
 The script also prints textual summaries of intervals, for example:
@@ -508,7 +491,7 @@ The script also prints textual summaries of intervals, for example:
 \begin{quote}
 \small
 \texttt{- SID (face): from 1.2s to 18.5s (duration 17.3s)}\\
-\texttt{- APPLE (object): from 3.0s to 19.5s (duration 16.5s)}\\
+\texttt{- CELL\_PHONE (object): from 3.0s to 19.5s (duration 16.5s)}\\
 \texttt{- FRIEND\_A (face): from 2.5s to 7.0s and from 12.0s to 19.0s}
 \end{quote}
 
@@ -540,7 +523,7 @@ people entering and leaving the scene. However, performance clearly depends on l
 \subsection{Scenario 1: Bright Indoor Room}
 
 In the bright indoor scenario, the Pi camera sensor receives a strong signal and the ISP can keep
-gain low, so noise is limited \cite{dennySensors}. Faces are detected with high confidence
+gain low, so noise is limited. Faces are detected with high confidence
 and recognition is stable across the whole 20~seconds.
 
 The average face recognition confidence for my own face was above 0.9 for most frames, and the
@@ -564,7 +547,7 @@ was much brighter than the people, the sensor had to choose between over-exposin
 window or under-exposing the faces. In practice, the faces were often darker and noisier.
 
 According to the image sensor theory, increasing analog gain in low light amplifies both
-signal and noise, reducing the effective signal-to-noise ratio \cite{dennySensors}.
+signal and noise, reducing the effective signal-to-noise ratio.
 This explains why face detection and recognition confidence dropped during these periods.
 Sometimes faces were not detected at all for several frames, which appears as gaps in
 the confidence plot.
@@ -627,12 +610,12 @@ The system:
 \end{itemize}
 
 I first developed and debugged the code on my laptop with a webcam and then ran the final
-training and inference fully on the Raspberry~Pi using Picamera2 and TensorFlow Lite.
+training and inference fully on the Raspberry~Pi using the OKDO 5MP camera and TensorFlow Lite.
 The system met the assignment requirements, and the experiments showed how careful control
 of lighting and camera configuration is essential for reliable embedded vision systems.
 
 Possible future improvements include better automatic quality feedback (for example, changing
-Picamera2 exposure settings when average brightness is too low), more robust tracking of people
+camera exposure settings when average brightness is too low), more robust tracking of people
 moving quickly, and exploring more efficient models to increase the frame rate on the Pi.
 
 % ============================================================
@@ -652,22 +635,32 @@ C.~Dunn.
 Accessed: 2025.
 
 \bibitem{dennyISP}
-P.~Denny.
-\newblock CS6461 Computer Vision Systems: ISP and Image Processing lecture notes.
+T.~V.~Vignesh.
+\newblock CS6461-- Computer Vision Systems.
+\newblock Lab-4: Image Signal Processing (ISP) vs Real-Time Face Recognition Performance
+\newblock Images, CS6461 Teaching Assistant.
 \newblock University of Limerick, 2025.
 
-\bibitem{dennySensors}
-P.~Denny.
-\newblock CS6461 Computer Vision Systems: Image Sensors and Camera Modules lecture notes.
+\bibitem{vigneshLab3}
+T.~V.~Vignesh.
+\newblock CS6461-- Computer Vision Systems.
+\newblock Lab-3: Real-Time Face Recognition.
+\newblock CS6461 Teaching Assistant.
+\newblock University of Limerick, 2025.
+
+\bibitem{vigneshLab5}
+T.~V.~Vignesh.
+\newblock CS6461-- Computer Vision Systems.
+\newblock Lab-5: Object Detection with TensorFlow Lite on JPG Images.
+\newblock CS6461 Teaching Assistant.
 \newblock University of Limerick, 2025.
 
 \bibitem{picamera2docs}
-Raspberry Pi Ltd.
-\newblock Picamera2 documentation.
-\newblock Available at: \url{https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf}.
+OKDO.
+\newblock OKDO 5MP camera documentation.
+\newblock Available at: \url{https://www.okdo.com/}.
 Accessed: 2025.
 
 \end{thebibliography}
-\label{LastPage}  % Label for total page count
 
 \end{document}

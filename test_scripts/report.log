@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.4) (preloaded format=xelatex 2025.12.3)  3 DEC 2025 18:54
+This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.4) (preloaded format=xelatex 2025.12.3)  3 DEC 2025 21:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -785,11 +785,7 @@ uage=dflt;mapping=tex-text;"
 Package hyperref Info: Option `colorlinks' set `true' on input line 75.
  (C:\Users\mshef\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-) (report.aux
-
-LaTeX Warning: Label `LastPage' multiply defined.
-
-)
+) (report.aux)
 \openout1 = `report.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 113.
@@ -926,9 +922,9 @@ File: image.png Graphic file (type bmp)
  [1
 
 ]
-Overfull \hbox (10.01619pt too wide) in paragraph at lines 153--157
-[]\TU/Aptos-Display(0)/m/n/10 The system combines two main components: (i) a Te
-nsorFlow Lite object detector based on SSD Mo-
+Overfull \hbox (6.97273pt too wide) in paragraph at lines 153--158
+\TU/Aptos-Display(0)/m/n/10 MobileNet running on the Raspberry Pi, and (ii) a f
+ace recognition pipeline using the \TU/lmtt/m/n/10 face_recognition
  []
 
 (report.toc
@@ -947,40 +943,30 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 
 [2]
-Overfull \hbox (17.3581pt too wide) in paragraph at lines 184--190
-\TU/Aptos-Display(0)/m/n/10.95 software libraries used are OpenCV for image pro
-cessing, Picamera2 for camera control, \TU/lmtt/m/n/10.95 face_recognition
- []
-
-
-Overfull \hbox (39.29898pt too wide) in paragraph at lines 229--233
-\TU/Aptos-Display(0)/m/n/10.95 camera. The script includes a \TU/lmtt/m/n/10.95
- --webcam \TU/Aptos-Display(0)/m/n/10.95 flag that switches between Picamera2 a
-nd OpenCV’s \TU/lmtt/m/n/10.95 VideoCapture(0)\TU/Aptos-Display(0)/m/n/10.95 .
- []
-
-[3]
+File: fig_setup_placeholder.jpg Graphic file (type bmp)
+<fig_setup_placeholder.jpg>
+ [3]
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 271.
+nput line 258.
  [4] [5] [6] [7] [8] [9]
-Underfull \hbox (badness 10000) in paragraph at lines 643--647
+Underfull \hbox (badness 10000) in paragraph at lines 626--630
 []\TU/Aptos-Display(0)/m/n/10.95 A. Priyadarshan.  TensorFlow-2-Lite-Object-Det
 ection-on-the-Raspberry-Pi (GitHub
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 643--647
+Underfull \hbox (badness 10000) in paragraph at lines 626--630
 \TU/Aptos-Display(0)/m/n/10.95 repository).  Available at: [][]$[][][][][] [] [
 ] [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 5519) in paragraph at lines 649--653
+Underfull \hbox (badness 5519) in paragraph at lines 632--636
 []\TU/Aptos-Display(0)/m/n/10.95 C. Dunn.  facial_recognition (GitHub repositor
 y).  Available at: [][]$[][][][][] [] [] [] [][][][][][] [] [][][] []
  []
 
-[10] 
+[10] [11] 
 enddocument/afterlastpage (AED): lastpage setting LastPage.
 (report.aux)
  ***********
@@ -989,18 +975,21 @@ L3 programming layer <2025-11-06>
  ***********
 
 
-LaTeX Warning: There were multiply-defined labels.
+Package rerunfilecheck Warning: File `report.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
 
-Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: 3B29F8F1003271F1D0C41E2BB3A30917;3396.
+Package rerunfilecheck Info: Checksums for `report.out':
+(rerunfilecheck)             Before: 7A772ED20AEEB96E05ED359BACD3A3E4;3134
+(rerunfilecheck)             After:  056BC40D9BAFEAA70314FE5C584ECA42;3126.
  ) 
 Here is how much of TeX's memory you used:
- 26255 strings out of 402987
- 518630 string characters out of 5448524
- 1368071 words of memory out of 5000000
- 54598 multiletter control sequences out of 15000+600000
+ 26264 strings out of 402987
+ 518708 string characters out of 5448524
+ 1380071 words of memory out of 5000000
+ 54605 multiletter control sequences out of 15000+600000
  632905 words of font info for 81 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  84i,12n,94p,419b,1882s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on report.pdf (10 pages).
+Output written on report.pdf (11 pages).

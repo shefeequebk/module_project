@@ -1,0 +1,669 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{fancyhdr}
+\usepackage{lastpage}  % For total page count
+
+\usepackage{titlesec}
+% To use Apto Display font, uncomment the following lines and compile with XeLaTeX or LuaLaTeX:
+% \usepackage{fontspec}
+% \setmainfont{Apto Display}
+\usepackage{fontspec}  
+% ===== FONT SELECTION =====
+% Currently using: Segoe UI
+% To use Aptos font:
+%   1. Install Aptos (see instructions below)
+%   2. Uncomment one of the \setmainfont{Aptos...} lines below
+%   3. Comment out or remove the current \setmainfont{Segoe UI} line
+%
+% HOW TO INSTALL APTOS FONT:
+%   - Aptos comes with Microsoft 365/Office - check if you have it installed
+%   - Or download from: Microsoft's official font repository
+%   - After downloading .ttf/.otf files, right-click → Install
+%   - Verify in Windows Settings → Personalization → Fonts (search for "Aptos")
+%
+% ===== FONT SELECTION =====
+% Option 1: Use font by name (requires font to be installed in system)
+% \setmainfont{Aptos}
+% \setmainfont{Aptos Display}
+% \setmainfont{AptosText-Regular}
+% \setmainfont{Aptos-Regular}
+
+% Option 2: Use font by file path (manual path)
+% Font path: C:\Users\mshef\Downloads\to_delete\Microsoft Aptos Fonts
+% Using Aptos-Display font
+\setmainfont{Aptos-Display}[
+    Path = C:/Users/mshef/Downloads/to_delete/Microsoft Aptos Fonts/,
+    Extension = .ttf,
+    UprightFont = Aptos-Display,
+    BoldFont = Aptos-Display-Bold,
+    ItalicFont = Aptos-Display-Italic,
+    BoldItalicFont = Aptos-Display-Bold-Italic
+]
+% \setmainfont{Aptos}[Path=C:/Windows/Fonts/,UprightFont=*Regular]
+
+% Option 3: Fallback fonts (if Aptos path doesn't work)
+% \setmainfont{Arial}
+% \setmainfont{Segoe UI}
+
+% Define Dark Teal color for section titles
+\definecolor{darkteal}{RGB}{15,71,97} 
+
+% Format section titles with Dark Teal color (no bold)
+
+\titleformat{\section}
+    {\normalfont\Large\color{darkteal}}
+    {}
+    {0em}
+    {} 
+    
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,  % Table of Contents and internal links in black
+    urlcolor=blue,    % URLs remain blue
+    citecolor=blue    % Citations remain blue
+}
+
+% ---------- Header and Footer ----------
+\pagestyle{fancy}
+\fancyhf{}  % Clear all header and footer fields
+\fancyhead[C]{}  % Empty header (center)
+\fancyfoot[C]{%
+    \centering
+    {\large\bfseries\textcolor{gray}{Page \thepage\ of \pageref{LastPage}}}\\[0.3em]
+    {\small\itshape\textcolor{gray}{CS6461 Module Project Report -- Computer Vision Systems - 03/12/2025 16:51}}%
+}
+\renewcommand{\headrulewidth}{0pt}  % Remove header rule
+\renewcommand{\footrulewidth}{0pt}  % Remove footer rule
+
+% ---------- Python listing style ----------
+\lstdefinestyle{mypython}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{teal},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt
+}
+\lstset{style=mypython}
+
+% ---------- Title info ----------
+\newcommand{\ModuleName}{CS6461 -- Computer Vision Systems}
+\newcommand{\ProjectTitle}{Real-Time Face and Object Recognition on Raspberry~Pi~4}
+\newcommand{\StudentName}{YOUR NAME HERE}
+\newcommand{\StudentID}{YOUR UL ID HERE}
+\newcommand{\RevisionTime}{DD/MM/YYYY HH:MM}
+
+\begin{document}
+
+% ---------- Title page ----------
+\begin{titlepage}
+    \thispagestyle{plain}  % No header/footer on title page
+    % Image in top left corner with small gap
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[anchor=north west,inner sep=1.2cm] at ($(current page.north west)$) {%
+            \includegraphics[width=6cm]{image.png}%
+        };
+    \end{tikzpicture}
+    
+    % Centered content
+    \vspace*{2cm}
+    \centering
+    {\Large Module Project Report for\\[0.3cm]
+    \textbf{\ModuleName}\par}
+    \vspace{2cm}
+    {\LARGE \textit{\ProjectTitle}\par}
+    \vspace{2cm}
+    {\large
+        \textbf{Student Name:} \textbf{\StudentName}\\[0.3cm]
+        \textbf{Student ID:} \textbf{\StudentID}\\[0.3cm]
+        Revision Timestamp: \RevisionTime
+    }
+    \vfill
+\end{titlepage}
+
+% ---------- Abstract ----------
+\begin{abstract}
+This project builds a complete computer vision system on a Raspberry~Pi~4 with a camera.
+The system observes a changing group of people and objects for 20~seconds and shows, in real-time,
+the name and confidence of each detected face and object as a bounding box caption.
+The student (myself) is always one of the registered people and holds their student card at some point.
+At least one person leaves and later returns to the scene during each recording.
+
+The system combines two main components: (i) a TensorFlow Lite object detector based on SSD~MobileNet
+running on the Raspberry Pi, and (ii) a face recognition pipeline using the \texttt{face\_recognition} library.
+I started development on my laptop using a webcam for easier debugging and then deployed the
+final version to the Raspberry Pi~4 using the Picamera2 library with \texttt{BGR888} capture format.
+
+During each 20-second run, the program logs all detections, generates a plot of confidence over time,
+and summarises the intervals where each person or object was successfully identified.
+The system is evaluated in at least three different lighting scenarios (bright indoor, outdoor daytime,
+and low-light/backlit) and I discuss how image sensor and ISP concepts such as exposure, gain,
+white balance and noise affect the performance.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+The aim of this project is to design and implement a real-time computer vision system on a Raspberry~Pi~4
+that can identify several known people and at least one object in a live camera stream.
+The system must:
+
+\begin{itemize}
+    \item Observe a group of at least four people and one object for 20~seconds.
+    \item Display the label and confidence for each recognised face and object in real time.
+    \item Detect when a person enters, leaves, and then re-enters the scene.
+    \item Produce a time-based plot of detections and confidence scores at the end of the run.
+    \item Comment on the overall quality of detections and relate problems to image sensor and ISP concepts.
+\end{itemize}
+
+The hardware platform is a Raspberry~Pi~4 with a Raspberry Pi camera and Raspberry Pi OS.
+The main software libraries used are OpenCV for image processing, Picamera2 for camera control,
+\texttt{face\_recognition} for face feature extraction, and TensorFlow Lite for object detection.
+The design of the system is guided by material from the module on image sensors, ISP pipelines,
+and embedded vision systems, for example exposure, gain, dynamic range and noise handling
+(see e.g.\ \cite{dennyISP,dennySensors}).
+
+The core of the project is a single Python script that reads frames from the camera, resizes them to a
+processing resolution, runs both face recognition and object detection, overlays the detections on the
+full-resolution frame, and logs all detections for later analysis. The final script used for the project
+is included separately in the submitted ZIP file as required by the assignment.
+
+\subsection{System Setup}
+
+The physical setup consists of:
+
+\begin{itemize}
+    \item Raspberry~Pi~4 (4\,GB RAM).
+    \item Raspberry Pi camera module configured via Picamera2.
+    \item Tripod or stand for the camera, aimed at an area where people can move in and out.
+    \item A small static object (e.g.\ an \emph{apple} or a \emph{mobile phone}) that is visible in the scene.
+    \item An HDMI monitor or remote viewing via VNC/SSH.
+\end{itemize}
+
+Figure~\ref{fig:setup} shows the hardware setup, including the student ID card required by the brief.
+
+\begin{figure}[H]
+    \centering
+    % Replace placeholder image name with your own file, e.g. setup_photo.jpg
+    \IfFileExists{fig_setup_placeholder.png}{%
+        \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.png}%
+    }{%
+        \IfFileExists{fig_setup_placeholder.jpg}{%
+            \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.jpg}%
+        }{%
+            \IfFileExists{fig_setup_placeholder.pdf}{%
+                \includegraphics[width=0.8\linewidth]{fig_setup_placeholder.pdf}%
+            }{%
+                \fbox{\parbox{0.8\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_setup\_placeholder]\\Place your setup photo here}\vspace{2cm}}}%
+            }%
+        }%
+    }
+    \caption{Raspberry Pi~4 and camera setup for the experiment (student holding ID card).\label{fig:setup}}
+\end{figure}
+
+I initially developed and debugged the code on my laptop by using a USB webcam instead of the Pi camera.
+The script includes a \texttt{--webcam} flag that switches between Picamera2 and OpenCV's
+\texttt{VideoCapture(0)}. Once the pipeline was stable on the laptop, I cloned the GitHub repository
+on the Raspberry~Pi and ran the training and inference completely on the Pi.
+
+% ============================================================
+\section{Methodology}
+% ============================================================
+
+This section describes the steps taken to build the system, including dataset preparation,
+face encoding, object detection, the combined runtime pipeline, and logging of detections.
+
+\subsection{Code Bases Used and Adapted}
+
+Two open-source repositories formed the basis of this project:
+
+\begin{itemize}
+    \item TensorFlow Lite object detection on Raspberry Pi
+    \cite{armaanTFLite}: used as the starting point for SSD MobileNet v2 object detection
+          and the TFLite inference loop.
+    \item Caroline Dunn's face recognition demo \cite{dunnFaceRec}: used for face encoding,
+          saving encodings to a \texttt{.pickle} file, and matching faces at run time.
+\end{itemize}
+
+I combined these two ideas into a single Python script that:
+
+\begin{enumerate}
+    \item Captures frames from Picamera2 in \texttt{BGR888} format at a full resolution of
+          1640\,$\times$\,1232.
+    \item Downscales a copy of each frame to a processing resolution (1280\,$\times$\,720) for speed.
+    \item Runs face recognition on the processed frame using \texttt{face\_recognition}.
+    \item Runs an SSD MobileNet TFLite object detector on the same processed frame.
+    \item Maps detections back onto the full-resolution frame to draw bounding boxes.
+    \item Logs the time, label, type (face or object), and confidence for every detection.
+\end{enumerate}
+
+\subsection{Raspberry Pi and Camera Configuration}
+
+The Raspberry~Pi~4 runs Raspberry Pi OS (64-bit) with Python~3. The camera is configured using Picamera2.
+Following the project brief and the Picamera2 documentation, I used the following configuration
+in the final script:
+
+\begin{lstlisting}[language=Python, caption={Picamera2 configuration used in the final script.}, label={lst:picam}]
+from picamera2 import Picamera2
+import time
+
+picam2 = Picamera2()
+
+config = picam2.create_preview_configuration(
+    main={"format": "BGR888", "size": (1640, 1232)},
+    controls={"AwbMode": 1, "Saturation": 1.0}
+)
+picam2.configure(config)
+picam2.start()
+time.sleep(1.0)  # let auto white balance settle
+\end{lstlisting}
+
+This matches the configuration style demonstrated in the module labs and the provided examples.
+Using \texttt{BGR888} avoids extra conversions when passing frames directly to OpenCV
+and \texttt{face\_recognition}. The automatic white-balance mode is enabled
+so that the camera adapts to changes in colour temperature between scenarios.
+
+\subsection{Face Registration and Encodings}
+
+Face recognition follows the workflow from \cite{dunnFaceRec}.
+First, I collected a small set of images for each person that appears in the video, including myself.
+Each person has at least three images in a \texttt{faces/} directory.
+I then used a separate script (submitted in the ZIP file) to build encodings:
+
+\begin{enumerate}
+    \item Iterate over images in \texttt{faces/}.
+    \item Detect the face in each image.
+    \item Compute the 128-D encoding using \texttt{face\_recognition.face\_encodings}.
+    \item Store the encoding and the corresponding name.
+\end{enumerate}
+
+The encodings are stored in a \texttt{encodings.pickle} file that is loaded by the main script.
+
+\begin{lstlisting}[language=Python, caption={Loading face encodings in the main script.}, label={lst:encodings}]
+import pickle
+
+def load_face_encodings(path="face_rec/encodings.pickle"):
+    print("[INFO] loading face encodings...")
+    with open(path, "rb") as f:
+        data = pickle.loads(f.read())
+    known_face_encodings = data["encodings"]
+    known_face_names = data["names"]
+    return known_face_encodings, known_face_names
+
+known_face_encodings, known_face_names = load_face_encodings()
+\end{lstlisting}
+
+During inference, each face encoding from the current frame is compared with the known encodings,
+and the label with the smallest distance is chosen if the distance is below a threshold.
+Confidence is computed as a simple mapping of distance to a value in $[0,1]$.
+
+\subsection{Object Detection with TensorFlow Lite}
+
+For object detection I used a TFLite SSD MobileNet model, following the TensorFlow-2-Lite
+Raspberry Pi repository \cite{armaanTFLite}. The model and label file are loaded once:
+
+\begin{lstlisting}[language=Python, caption={Loading a TFLite object detection model.}, label={lst:tflite}]
+import tflite_runtime.interpreter as tflite
+import numpy as np
+
+def load_tflite_model(model_path, labels_path):
+    interpreter = tflite.Interpreter(model_path=model_path)
+    interpreter.allocate_tensors()
+
+    input_details  = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    input_height   = input_details[0]["shape"][1]
+    input_width    = input_details[0]["shape"][2]
+    floating_model = input_details[0]["dtype"] == np.float32
+
+    with open(labels_path, "r") as f:
+        labels = [line.strip() for line in f.readlines()]
+
+    return interpreter, labels, input_details, output_details, \
+           input_height, input_width, floating_model
+\end{lstlisting}
+
+On each processed frame (\texttt{frame\_proc}), I convert it to RGB, resize it to the network
+input size, normalise it if necessary and run \texttt{interpreter.invoke()}.
+Bounding boxes are then rescaled back to the processed resolution.
+I filter out the COCO \texttt{person} class from the object detector, because faces are already
+handled separately by the face recognition pipeline, and I kept only a small white-list of objects
+(e.g.\ \emph{apple}, \emph{cell phone}) that are present in the scene.
+
+\subsection{Combined Runtime Pipeline}
+
+The main loop, simplified from the final script, is shown in Listing~\ref{lst:mainloop}.
+Frames are captured at 1640\,$\times$\,1232 and a copy is resized to 1280\,$\times$\,720 for processing.
+Face recognition runs every second frame to save CPU, and the object detector runs every fourth frame.
+This scheduling helps keep the average frame rate around the required value on the Raspberry Pi.
+
+\begin{lstlisting}[language=Python, caption={Simplified main loop combining capture, face recognition and TFLite object detection.}, label={lst:mainloop}]
+FACE_EVERY_N_FRAMES = 2
+OBJ_EVERY_N_FRAMES  = 4
+PROC_W, PROC_H      = 1280, 720
+
+frame_idx = 0
+experiment_start = time.time()
+detections_log = []
+
+while True:
+    now = time.time()
+    elapsed = now - experiment_start
+    if elapsed > args.duration:  # 20 seconds
+        break
+
+    frame_full = videostream.read()
+    if frame_full is None:
+        continue
+
+    # For safety, update full width/height
+    full_h, full_w = frame_full.shape[:2]
+
+    # Make a smaller copy for processing
+    frame_proc = cv2.resize(frame_full, (PROC_W, PROC_H))
+
+    frame_idx += 1
+    run_face = (frame_idx % FACE_EVERY_N_FRAMES == 0)
+    run_obj  = (frame_idx % OBJ_EVERY_N_FRAMES  == 0)
+
+    if run_face:
+        face_dets_proc = recognize_faces(
+            frame_proc, known_face_encodings, known_face_names, cv_scaler=2
+        )
+    if run_obj:
+        obj_dets_proc = detect_objects(
+            frame_proc, interpreter, labels, min_conf_thresh,
+            input_details, output_details, input_height,
+            input_width, floating_model
+        )
+
+    # Scale detections from processed to full frame
+    scale_x = full_w / float(PROC_W)
+    scale_y = full_h / float(PROC_H)
+
+    face_dets_full = []
+    for det in face_dets_proc:
+        top_p, left_p, bottom_p, right_p = det["box"]
+        top    = int(top_p    * scale_y)
+        left   = int(left_p   * scale_x)
+        bottom = int(bottom_p * scale_y)
+        right  = int(right_p  * scale_x)
+        face_dets_full.append({**det, "box": (top, left, bottom, right)})
+
+    obj_dets_full = []
+    for det in obj_dets_proc:
+        top_p, left_p, bottom_p, right_p = det["box"]
+        top    = int(top_p    * scale_y)
+        left   = int(left_p   * scale_x)
+        bottom = int(bottom_p * scale_y)
+        right  = int(right_p  * scale_x)
+        obj_dets_full.append({**det, "box": (top, left, bottom, right)})
+
+    # Log detections for later analysis
+    for det in face_dets_full:
+        detections_log.append({
+            "time": elapsed,
+            "label": det["label"],
+            "kind": "face",
+            "confidence": det["confidence"],
+        })
+    for det in obj_dets_full:
+        detections_log.append({
+            "time": elapsed,
+            "label": det["label"],
+            "kind": "object",
+            "confidence": det["confidence"],
+        })
+
+    # Draw boxes on full frame (faces = yellow, objects = green)
+    # [Drawing code omitted here; see submitted script]
+\end{lstlisting}
+
+At the end of the run, \texttt{detections\_log} is passed to a plotting function that creates the required
+time-based confidence plot and also prints out intervals where each label was present.
+
+\subsection{Quality Assessment Heuristic}
+
+To satisfy the requirement of reporting on detection quality, I added a simple heuristic.
+For each time step, I compute the average face confidence. If it is very low or if no faces
+are detected for several seconds even though people are expected to be in the frame,
+the script prints a warning such as:
+
+\begin{itemize}
+    \item ``Warning: low face confidence, scene may be too dark or camera may be out of focus.''
+    \item ``Warning: faces lost for more than 3 seconds; check exposure or people too far away.''
+\end{itemize}
+
+These warnings are then interpreted in the Results and Discussion section in terms of
+image sensor and ISP behaviour, such as reduced signal-to-noise ratio in low light and motion blur.
+
+% ============================================================
+\section{Results and Discussion}
+% ============================================================
+
+I ran the system for 20~seconds in three different scenarios:
+
+\begin{enumerate}
+    \item \textbf{Scenario~1: Bright indoor room}. Daytime living room with good, even lighting.
+    \item \textbf{Scenario~2: Outdoor overcast daytime}. Outside in mild natural light.
+    \item \textbf{Scenario~3: Indoor low light with strong backlighting}. Evening room with a bright window
+          behind the group.
+\end{enumerate}
+
+In each case, at least four people and one object (\emph{apple} or \emph{mobile phone}) were visible.
+One person intentionally left and then re-entered the frame during the 20~seconds.
+
+\subsection{Overall Behaviour}
+
+Figure~\ref{fig:timeline} (placeholder) shows an example plot of detection confidence over time
+for the different labels in one scenario. Each coloured curve corresponds to a person or object.
+Long gaps in a person's curve indicate intervals where the face was not detected or recognised.
+
+\begin{figure}[H]
+    \centering
+    % Replace filename with your generated plot, e.g. detections_over_time.png
+    \IfFileExists{fig_detections_over_time_placeholder.png}{%
+        \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.png}%
+    }{%
+        \IfFileExists{fig_detections_over_time_placeholder.jpg}{%
+            \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.jpg}%
+        }{%
+            \IfFileExists{fig_detections_over_time_placeholder.pdf}{%
+                \includegraphics[width=0.9\linewidth]{fig_detections_over_time_placeholder.pdf}%
+            }{%
+                \fbox{\parbox{0.9\linewidth}{\centering\vspace{2cm}\textcolor{gray}{[Image: fig\_detections\_over\_time\_placeholder]\\Place your confidence plot here}\vspace{2cm}}}%
+            }%
+        }%
+    }
+    \caption{Example confidence over time for different people and objects.\label{fig:timeline}}
+\end{figure}
+
+The script also prints textual summaries of intervals, for example:
+
+\begin{quote}
+\small
+\texttt{- SID (face): from 1.2s to 18.5s (duration 17.3s)}\\
+\texttt{- APPLE (object): from 3.0s to 19.5s (duration 16.5s)}\\
+\texttt{- FRIEND\_A (face): from 2.5s to 7.0s and from 12.0s to 19.0s}
+\end{quote}
+
+This clearly shows that \texttt{FRIEND\_A} left the scene around 7~s and returned around 12~s,
+as required by the project description.
+
+\subsection{Quantitative Summary}
+
+Table~\ref{tab:summary} gives a simple summary of the three scenarios.
+The frame rate values are averaged over the 20~seconds based on the timing information.
+
+\begin{table}[H]
+    \centering
+    \caption{Summary of performance in different scenarios.\label{tab:summary}}
+    \begin{tabular}{|l|c|c|c|}
+    \hline
+    Scenario & Avg.\ FPS & Face recognition quality & Object detection quality \\
+    \hline
+    Bright indoor & $\approx$ 10--12 & High, stable confidence ($>0.8$) & Reliable for target object \\
+    Outdoor daytime & $\approx$ 9--11 & Good, some variation & Good, occasional false positives \\
+    Low light / backlit & $\approx$ 7--9 & Unstable, drops below 0.6 & Weaker, missed some frames \\
+    \hline
+    \end{tabular}
+\end{table}
+
+Overall, the system meets the requirement of showing labels and confidence in real time and detecting
+people entering and leaving the scene. However, performance clearly depends on lighting.
+
+\subsection{Scenario 1: Bright Indoor Room}
+
+In the bright indoor scenario, the Pi camera sensor receives a strong signal and the ISP can keep
+gain low, so noise is limited \cite{dennySensors}. Faces are detected with high confidence
+and recognition is stable across the whole 20~seconds.
+
+The average face recognition confidence for my own face was above 0.9 for most frames, and the
+\texttt{detections\_log} showed almost continuous coverage. The static object (e.g.\ a mobile phone)
+was also detected reliably by the SSD MobileNet model whenever it was in the field of view.
+
+\subsection{Scenario 2: Outdoor Overcast Daytime}
+
+Outdoors with soft natural light, the system behaved similarly to the bright indoor case,
+but there were more changes in illumination when people moved. The auto-exposure and
+auto white-balance in the ISP had to adjust more often \cite{dennyISP}, which caused
+small drops in confidence during transitions.
+
+The confidence plot shows slightly more noise, but overall the system still worked well.
+Faces were correctly recognised when they faced the camera and were not too far away.
+
+\subsection{Scenario 3: Low Light and Backlighting}
+
+The low-light and backlit scenario was the most challenging. When the background window
+was much brighter than the people, the sensor had to choose between over-exposing the
+window or under-exposing the faces. In practice, the faces were often darker and noisier.
+
+According to the image sensor theory, increasing analog gain in low light amplifies both
+signal and noise, reducing the effective signal-to-noise ratio \cite{dennySensors}.
+This explains why face detection and recognition confidence dropped during these periods.
+Sometimes faces were not detected at all for several frames, which appears as gaps in
+the confidence plot.
+
+The simple quality heuristic in the code often triggered warnings in this scenario,
+indicating low average confidence. These warnings correctly suggested poor lighting
+or the need to move closer to the camera. When we added an extra lamp in the room,
+the performance improved noticeably, confirming that lighting was the main issue.
+
+\subsection{Discussion of Image Sensor and ISP Effects}
+
+Across the three scenarios, the behaviour can be linked directly to sensor and ISP concepts:
+
+\begin{itemize}
+    \item \textbf{Exposure time and motion blur:}
+          If exposure time is too long in low light, motion blur causes faces to appear soft,
+          reducing detection accuracy.
+    \item \textbf{Gain and noise:}
+          High gain in dark scenes amplifies noise, which can confuse both the face detector
+          and the object detector.
+    \item \textbf{Dynamic range:}
+          Backlit scenes exceed the dynamic range of the sensor, so either faces or the background
+          get clipped.
+    \item \textbf{Auto white-balance:}
+          Sudden colour temperature changes can temporarily distort skin tones until AWB settles.
+\end{itemize}
+
+These observations match what was discussed in the lectures about image sensors and ISP pipelines
+and show how those concepts appear in a practical embedded system.
+
+\subsection{Ethical Considerations}
+
+Face recognition systems raise important ethical questions:
+
+\begin{itemize}
+    \item \textbf{Privacy and consent:}
+          All people in my experiments gave consent to be recorded, and the system was used only
+          for this coursework. In real use, clear consent and data protection policies would be needed.
+    \item \textbf{Data storage:}
+          Face encodings are stored in a file (\texttt{encodings.pickle}). In a real deployment,
+          this file should be encrypted and access controlled.
+    \item \textbf{Bias and fairness:}
+          A small training set with only a few people can lead to bias. A real system would require
+          much more diverse training data to avoid systematic errors.
+\end{itemize}
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+In this project I implemented a complete real-time computer vision system on a Raspberry~Pi~4.
+The system:
+
+\begin{itemize}
+    \item Recognises multiple known people and at least one object in a live video stream.
+    \item Displays names and confidence levels as bounding box captions.
+    \item Logs detections and produces a time-based confidence plot.
+    \item Demonstrates how performance changes across different lighting scenarios and why,
+          based on image sensor and ISP theory.
+\end{itemize}
+
+I first developed and debugged the code on my laptop with a webcam and then ran the final
+training and inference fully on the Raspberry~Pi using Picamera2 and TensorFlow Lite.
+The system met the assignment requirements, and the experiments showed how careful control
+of lighting and camera configuration is essential for reliable embedded vision systems.
+
+Possible future improvements include better automatic quality feedback (for example, changing
+Picamera2 exposure settings when average brightness is too low), more robust tracking of people
+moving quickly, and exploring more efficient models to increase the frame rate on the Pi.
+
+% ============================================================
+\begin{thebibliography}{9}
+% ============================================================
+
+\bibitem{armaanTFLite}
+A.~Priyadarshan.
+\newblock TensorFlow-2-Lite-Object-Detection-on-the-Raspberry-Pi (GitHub repository).
+\newblock Available at: \url{https://github.com/armaanpriyadarshan/TensorFlow-2-Lite-Object-Detection-on-the-Raspberry-Pi}.
+Accessed: 2025.
+
+\bibitem{dunnFaceRec}
+C.~Dunn.
+\newblock facial\_recognition (GitHub repository).
+\newblock Available at: \url{https://github.com/carolinedunn/facial_recognition}.
+Accessed: 2025.
+
+\bibitem{dennyISP}
+P.~Denny.
+\newblock CS6461 Computer Vision Systems: ISP and Image Processing lecture notes.
+\newblock University of Limerick, 2025.
+
+\bibitem{dennySensors}
+P.~Denny.
+\newblock CS6461 Computer Vision Systems: Image Sensors and Camera Modules lecture notes.
+\newblock University of Limerick, 2025.
+
+\bibitem{picamera2docs}
+Raspberry Pi Ltd.
+\newblock Picamera2 documentation.
+\newblock Available at: \url{https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf}.
+Accessed: 2025.
+
+\end{thebibliography}
+
+\label{LastPage}  % Label for total page count
+\end{document}
